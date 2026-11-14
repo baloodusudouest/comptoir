@@ -116,6 +116,16 @@ def livre_deux_colonnes() -> bytes:
              "<p>MÉTHODE : FRAPPER avec de la glace et filtrer.</p>"
              "<p><img src=\"images/vague.jpg\" alt=\"\"/></p><p>Une phrase de fin de page qui n'est pas un nom de cocktail, bien plus longue.</p>"
              "<h3>★★☆☆☆</h3><ul><li>30 ml de vodka</li><li>90 ml de jus de cranberry</li></ul><p>MÉTHODE : VERSER sur la glace.</p>"),
+        # Variantes entre parenthèses sous le nom (en titre puis en paragraphe), rubrique mise en titre,
+        # et un « conseil du barman » dont une ligne commence par une quantité (ce n'est pas une recette pour autant)
+        (34, "<h2>GRAND LARGE</h2><h3>(RECETTE DE LA MAISON)</h3><h3>★★★★☆</h3><h4>VERRE : coupe</h4>"
+             "<ul><li>40 ml de gin</li><li>20 ml de jus de citron</li></ul><p>MÉTHODE : FRAPPER avec de la glace et filtrer.</p>"
+             "<h2>GRAND LARGE</h2><p>(FORMULE CLASSIQUE)</p><p>★★★☆☆</p><p>VERRE : coupe</p>"
+             "<ul><li>50 ml de gin</li><li>10 ml de jus de citron</li></ul><p>MÉTHODE : REMUER avec de la glace et filtrer.</p>"
+             "<h2>CONSEIL DU BARMAN POUR L'ORDRE DE PRÉPARATION</h2>"
+             "<p>Comme en cuisine, un cocktail se prépare dans un certain ordre : les ingrédients les moins chers d'abord, "
+             "pour qu'une erreur de dosage coûte peu, puis les spiritueux, et la glace tout à la fin pour limiter la dilution.</p>"
+             "<p>1 trait d'amer se verse en dernier, juste avant de frapper, sinon son parfum se perd dans le shaker.</p>"),
     ]
     fichiers = [(f"p{i + 1:04d}.xhtml", _page(n, corps)) for i, (n, corps) in enumerate(pages)]
     liste = [(f"p{i + 1:04d}.xhtml#page-{n}", str(n)) for i, (n, _) in enumerate(pages)]

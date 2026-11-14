@@ -197,6 +197,9 @@ def titre_propre(titre: str) -> str:
         if i and re.match(r"^(d|l)['’]", m):          # « zeste d'orange » : l'élision reste en minuscule
             res.append(m[:2] + m[2:3].upper() + m[3:])
             continue
+        if i and re.fullmatch(r"(?=[ivx])x{0,3}(?:ix|iv|v?i{0,3})", m):     # « Amaretto Sour II »
+            res.append(m.upper())
+            continue
         j = next((k for k, c in enumerate(m) if c.isalpha()), None)
         if j is None:
             res.append(m)
@@ -436,7 +439,9 @@ def _nom_au_dessus(sortie: list[Bloc]) -> int | None:
 
 
 def sans_faux_titres(blocs: list[Bloc]) -> list[Bloc]:
-    """Certains livres mettent sous le nom du cocktail des titres sans lettre : la note (« ★★★★☆ ») et un « 0 ».
+    """Sous le nom du cocktail, la variante entre parenthèses (« (RECETTE DIFFORD) », en titre ou en paragraphe) est
+    rattachée au nom : sinon elle devenait le nom, ou deux variantes portaient le même nom.
+    Certains livres mettent aussi sous le nom des titres sans lettre : la note (« ★★★★☆ ») et un « 0 ».
     Pris pour des titres, ils remplaçaient le nom de la recette.
     - la note juste sous un nom (seuls des repères de page entre les deux) redevient un paragraphe, lu comme note ;
     - une note sans nom au-dessus marque quand même le début d'une recette (sinon elle se fondrait dans la précédente) :
@@ -444,6 +449,17 @@ def sans_faux_titres(blocs: list[Bloc]) -> list[Bloc]:
     - les autres titres sans lettre (« 0 ») sont écartés."""
     sortie: list[Bloc] = []
     for b in blocs:
+        texte = b.texte.strip()
+        # « (FORMULE CLASSIQUE) », « (RECETTE DIFFORD) » sous le nom : la variante fait partie du nom
+        if b.sorte in ("titre", "para") and texte.startswith("(") and texte.endswith(")") and len(texte) <= 60:
+            precedent = next((i for i in range(len(sortie) - 1, -1, -1) if sortie[i].sorte not in ("page", "image")), None)
+            if precedent is not None and sortie[precedent].sorte == "titre" and not sortie[precedent].texte.endswith(")"):
+                p = sortie[precedent]
+                sortie[precedent] = Bloc("titre", f"{p.texte.strip()} {texte}", niveau=p.niveau)
+                continue
+        if b.sorte == "titre" and rubrique(texte):        # « VERRE: martini » mis en titre : c'est une rubrique
+            sortie.append(Bloc("para", texte))
+            continue
         if b.sorte == "titre" and not any(c.isalpha() for c in b.texte):
             if NOTE.match(b.texte.strip()):
                 nom = _nom_au_dessus(sortie)
@@ -477,7 +493,8 @@ def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bo
         for j, b in enumerate(section):
             if _est_ligne_ingredient(b, arbre, dans_suite=bool(idx_ing) and idx_ing[-1] >= j - 2):
                 idx_ing.append(j)
-        if not idx_ing or not any(commence_par_quantite(section[j].texte) for j in idx_ing):
+        conseil = bool(PREFIXE_CONSEIL.match(blocs[debut].texte.strip()))   # « Conseil du barman… » : jamais une recette
+        if conseil or not idx_ing or not any(commence_par_quantite(section[j].texte) for j in idx_ing):
             # pas une recette : titre de chapitre, introduction, conseil du barman, page sur les verres…
             contenu = [{"sorte": b.sorte, "texte": b.texte.strip()} for b in section
                        if b.sorte in ("para", "li_ul", "li_ol") and b.texte.strip() and not NOTE.match(b.texte)

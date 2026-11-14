@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 0.2.3 — 14 novembre 2026
+- La variante écrite entre parenthèses sous le nom (« (FORMULE CLASSIQUE) », « (RECETTE DIFFORD) », en titre ou en paragraphe) est rattachée au nom : « Blood & Sand (Formule classique) », « Blood & Sand (Recette Difford) ». Avant, elle devenait le nom ou deux variantes portaient le même.
+- Une rubrique mise en titre par le livre (« VERRE: martini ») reste une rubrique au lieu de devenir le nom d'une recette.
+- Un « Conseil du barman » n'est plus jamais lu comme une recette (5 fausses recettes dans l'essai).
+- Chiffres romains gardés en capitales dans les noms (« Amaretto Sour II »).
+- Livre d'essai : 2 973 recettes, 176 lignes sans ingrédient reconnu sur 13 319. 47 tests.
+
 ## 0.2.2 — 14 novembre 2026
 - Redéposer un livre déjà importé propose **Réimporter à neuf** en un clic (il passe par la corbeille et y est effacé), au lieu d'un simple refus. Plus besoin de le supprimer d'abord.
 - 47 tests.

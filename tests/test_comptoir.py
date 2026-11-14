@@ -21,7 +21,7 @@ def test_livre_en_deux_colonnes_rubriques_et_etoiles(client):
     """Quantités puis noms en colonnes (« 30 ml », « 15 ml »… puis « de rhum ambré »…), rubriques VERRE / DÉCO / MON AVIS /
     ORIGINE, note en étoiles : tout est rangé, et la parenthèse de l'origine donne le lieu de création."""
     r = importer(client, livre_deux_colonnes()).json()
-    assert r["recettes"] == 5 and r["a_verifier"] == 1 and r["conseils"] == 1
+    assert r["recettes"] == 7 and r["a_verifier"] == 1 and r["conseils"] == 2
     recettes = par_titre(client)
     assert recettes["Triangle du Port"]["note"] == 4
     fiche = client.get(f"/api/recettes/{recettes['Triangle du Port']['id']}").json()
@@ -44,6 +44,12 @@ def test_note_ecrite_comme_un_titre(client):
     assert recettes["Brise du Large"]["note"] == 5
     brise = client.get(f"/api/recettes/{recettes['Brise du Large']['id']}").json()
     assert brise["chapeau"] == "" and len(brise["lignes"]) == 2                 # « O-E » du scan écarté
+    # La variante entre parenthèses fait partie du nom ; « VERRE : coupe » mis en titre reste une rubrique
+    assert recettes["Grand Large (Recette de la Maison)"]["note"] == 4
+    assert recettes["Grand Large (Formule Classique)"]["note"] == 3
+    grand = client.get(f"/api/recettes/{recettes['Grand Large (Recette de la Maison)']['id']}").json()
+    assert {i["nom"]: i["texte"] for i in grand["infos"]}["Verre"] == "coupe"
+    assert not any(t.upper().startswith(("VERRE", "CONSEIL", "(")) for t in recettes)
     sans_nom = recettes["Sans nom, p. 33"]
     assert sans_nom["note"] == 2 and sans_nom["etat"] == "a_verifier"
     a_traiter = client.get("/api/a-traiter").json()["elements"]
@@ -56,10 +62,11 @@ def test_conseils_du_livre(client):
     assert vide == {"conseils": [], "themes": [], "livres": 0}
     importer(client, livre_deux_colonnes())
     liste = client.get("/api/conseils").json()
-    assert [c["titre"] for c in liste["conseils"]] == ["Glace"]          # « Conseil du barman pour la glace » → « Glace »
+    # « Conseil du barman pour la glace » → « Glace » ; l'ordre de préparation, malgré sa ligne « 1 trait… », est un conseil
+    assert [c["titre"] for c in liste["conseils"]] == ["Glace", "Ordre de préparation"]
     c = liste["conseils"][0]
     assert c["theme"] == "Glace" and c["pages"] == "p. 31" and c["livre"] == "Bible du port" and c["apercu"].startswith("Une glace")
-    assert liste["themes"] == ["Glace"] and liste["livres"] == 1
+    assert liste["livres"] == 1
     detail = client.get(f"/api/conseils/{c['id']}").json()
     assert len(detail["contenu"]) == 2 and all(x["sorte"] == "para" for x in detail["contenu"])
     assert not any("EXCELLENT" in x["texte"] for x in detail["contenu"])
@@ -69,7 +76,7 @@ def test_conseils_du_livre(client):
     assert client.get("/api/conseils").json()["conseils"] == []
     assert client.get(f"/api/conseils/{c['id']}").status_code == 404
     client.post(f"/api/livres/{livre_id}/restaurer")
-    assert len(client.get("/api/conseils").json()["conseils"]) == 1
+    assert len(client.get("/api/conseils").json()["conseils"]) == 2
 
 
 def test_effacer_maintenant_puis_reimporter_a_neuf(client):

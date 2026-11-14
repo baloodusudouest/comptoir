@@ -98,6 +98,28 @@ def test_effacer_maintenant_puis_reimporter_a_neuf(client):
     assert any(j["action"] == "effacement" for j in client.get("/api/journal").json())
 
 
+def test_listes_par_ordre_alphabetique(client):
+    """Ingrédients, Mon bar et recettes de A à Z, accents compris (« É » avec les E), guillemets du début ignorés."""
+    from app.main import cle_alpha
+    assert cle_alpha("Écorce") < cle_alpha("Fraise") and cle_alpha("« Two Guns » Miller") > cle_alpha("Tom Collins")
+    ing = client.get("/api/ingredients").json()
+    cles = [[cle_alpha(x) for x in i["chemin"]] for i in ing]
+    assert cles == sorted(cles)
+    jus = [i["nom"] for i in ing if i["chemin"][0] == "Jus & fruits" and len(i["chemin"]) == 2]
+    assert jus == sorted(jus, key=cle_alpha) and len(jus) > 5
+    importer(client, livre_scriptorium())
+    importer(client, livre_deux_colonnes())
+    bar = client.get("/api/bar").json()["categories"]
+    assert [c["nom"] for c in bar] == sorted((c["nom"] for c in bar), key=cle_alpha)
+    for c in bar:
+        assert [f["nom"] for f in c["familles"]] == sorted((f["nom"] for f in c["familles"]), key=cle_alpha)
+        for f in c["familles"]:
+            variantes = [i["nom"] for i in f["ingredients"][1:]]
+            assert variantes == sorted(variantes, key=cle_alpha)
+    titres = [r["titre"] for r in client.get("/api/recettes").json()["recettes"]]
+    assert titres == sorted(titres, key=cle_alpha)
+
+
 def test_base_de_la_version_0_1_mise_a_niveau(tmp_path):
     """Une base créée par la 0.1 (sans colonnes infos et note, sans table conseil) s'ouvre et reçoit ce qui manque."""
     import sqlite3

@@ -3,6 +3,7 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (14/11/2026)
+- **0.3.1** : toutes les listes de noms de A à Z (`cle_alpha` dans `main.py`, `localeCompare('fr')` côté écran).
 - **0.3.0** : carte zoomable (d3-zoom), retour qui garde le lieu choisi et la position (`vues` dans `donnees.svelte.js`, positions par adresse dans `App.svelte`), pastilles faisable / favori.
 - **0.2.3** : variantes entre parenthèses rattachées au nom, rubriques mises en titre, conseils jamais lus comme recettes, chiffres romains. Le conseil « ordre de préparation » de l'essai est vide dans l'EPUB lui-même (Scriptorium n'a gardé que les numéros de la liste).
 - **0.2.1** : la note en étoiles mise en titre par le livre ne remplace plus le nom (318 recettes touchées dans l'essai) ; corbeille : « Effacer maintenant », « Réimporter à neuf ». Un livre importé avant se relit ainsi : le redéposer et choisir « Réimporter à neuf » (0.2.2 : plus besoin de le supprimer d'abord).

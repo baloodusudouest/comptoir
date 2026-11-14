@@ -126,6 +126,13 @@ def deconnexion():
 
 # ================================================================ outils communs
 
+def cle_alpha(texte: str) -> str:
+    """Clé de tri alphabétique à la française : « Écorce » avec les E, pas après le Z ; majuscules ignorées."""
+    import unicodedata
+    sans_accents = "".join(c for c in unicodedata.normalize("NFD", texte) if unicodedata.category(c) != "Mn").casefold()
+    return sans_accents.lstrip("«»\"'“”‘’()[]#*-–— .")       # « Two Guns » Miller se range aux T
+
+
 ACTIVES = "FROM recette r JOIN livre l ON l.id = r.livre_id WHERE l.supprime_le IS NULL AND r.etat != 'ignore'"
 
 
@@ -347,7 +354,7 @@ def recettes():
     lieux_par: dict[int, list[dict]] = {}
     for x in B().lire("SELECT * FROM lieu_recette"):
         lieux_par.setdefault(x["recette_id"], []).append(x)
-    liste = B().lire(f"SELECT r.*, l.titre livre {ACTIVES} ORDER BY r.titre COLLATE NOCASE")
+    liste = sorted(B().lire(f"SELECT r.*, l.titre livre {ACTIVES}"), key=lambda r: cle_alpha(r["titre"]))
     calc = calculer(_bar(), lignes)
     arbre = ETAT["arbre"]
     bases = sorted({b for b in (_base_alcool(lignes.get(r["id"], [])) for r in liste) if b}, key=lambda b: arbre.noeuds[b].nom)
@@ -473,16 +480,15 @@ def bar():
     for f in familles:
         fam = arbre.noeuds[f]
         cat = arbre.noeuds[fam.categorie]
-        items = [fam.id, *fam.enfants]
+        items = [fam.id, *sorted(fam.enfants, key=lambda e: cle_alpha(arbre.noeuds[e].nom))]   # la famille, puis ses variantes de A à Z
         bloc = cats.setdefault(cat.id, {"id": cat.id, "nom": cat.nom, "familles": []})
         bloc["familles"].append({"id": fam.id, "nom": fam.nom, "ingredients": [
             {"id": i, "nom": arbre.noeuds[i].nom, "niveau": arbre.noeuds[i].niveau, "present": i in presents,
              "frais": i in frais, "frais_propose": arbre.noeuds[i].frais,
              "toujours_la": arbre.noeuds[i].toujours_la, "recettes": emplois.get(i, 0)} for i in items]})
-    ordre = [n.id for n in arbre.noeuds.values() if n.niveau == "categorie"]
-    sortie = sorted(cats.values(), key=lambda c: ordre.index(c["id"]))
+    sortie = sorted(cats.values(), key=lambda c: cle_alpha(c["nom"]))
     for c in sortie:
-        c["familles"].sort(key=lambda f: f["nom"])
+        c["familles"].sort(key=lambda f: cle_alpha(f["nom"]))
     return {"categories": sortie, "faisables": len(_calcul()["faisables"])}
 
 
@@ -514,7 +520,8 @@ def marquer_frais(corps: dict = Body(...)):
 def ingredients():
     """Tout l'arbre, pour rattacher un nom inconnu ou créer une équivalence."""
     arbre = ETAT["arbre"]
-    return [{"id": n.id, "nom": n.nom, "niveau": n.niveau, "chemin": arbre.chemin(n.id)} for n in arbre.noeuds.values()]
+    liste = [{"id": n.id, "nom": n.nom, "niveau": n.niveau, "chemin": arbre.chemin(n.id)} for n in arbre.noeuds.values()]
+    return sorted(liste, key=lambda i: [cle_alpha(x) for x in i["chemin"]])        # catégorie, puis famille, puis variante
 
 
 @app.get("/api/equivalences")

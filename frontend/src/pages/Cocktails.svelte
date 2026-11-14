@@ -18,12 +18,12 @@
   let quoi = $state(vues.liste.quoi)        // tout, faisables, presque
   let favoris = $state(vues.liste.favoris)
   $effect(() => { Object.assign(vues.liste, { livre, base, quoi, favoris }) })
-  let livres = $derived([...new Map(etat.recettes.map((r) => [r.livre_id, r.livre])).entries()].sort((a, b) => a[1].localeCompare(b[1])))
+  let livres = $derived([...new Map(etat.recettes.map((r) => [r.livre_id, r.livre])).entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr', { sensitivity: 'base' })))
   const numero = (p) => parseInt((p || '').replace(/^p\. /, ''), 10) || 0
   let liste = $derived(etat.recettes.filter((r) =>
       (!livre || String(r.livre_id) === livre) && (!base || r.base === base) && (!favoris || r.favori) &&
       (quoi === 'tout' || (quoi === 'faisables' ? etat.faisables.has(r.id) : etat.presque.has(r.id))))
-    .sort((a, b) => (livre ? numero(a.pages) - numero(b.pages) : 0) || a.titre.localeCompare(b.titre)))
+    .sort((a, b) => (livre ? numero(a.pages) - numero(b.pages) : 0) || etat.recettes.indexOf(a) - etat.recettes.indexOf(b)))   // ordre alphabétique donné par le serveur
 
   // ---------------------------------------------------------------- par lieu
   let sorte = $state(vues.lieux.sorte)   // cree_a, evoque, les-deux
@@ -34,8 +34,10 @@
   let lieux = $derived([...etat.lieux.values()])
   let arbre = $derived.by(() => {
     const avec = lieux.filter((l) => ids(l).length)
-    const enfants = (parent) => avec.filter((l) => l.parent === parent).sort((a, b) => ids(b).length - ids(a).length || a.nom.localeCompare(b.nom))
-    return avec.filter((l) => l.type === 'pays').sort((a, b) => ids(b).length - ids(a).length || a.nom.localeCompare(b.nom))
+    // De A à Z à chaque niveau (pays, régions, villes), accents compris ; le nombre de cocktails est affiché à côté
+    const alpha = (a, b) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' })
+    const enfants = (parent) => avec.filter((l) => l.parent === parent).sort(alpha)
+    return avec.filter((l) => l.type === 'pays').sort(alpha)
       .map((p) => ({ ...p, sous: enfants(p.id).map((r) => ({ ...r, sous: enfants(r.id).map((v) => ({ ...v, sous: enfants(v.id) })) })) }))
   })
   let recettesChoisies = $derived(choisi ? etat.recettes.filter((r) => ids(etat.lieux.get(choisi)).includes(r.id)) : [])

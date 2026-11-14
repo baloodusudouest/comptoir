@@ -1,5 +1,9 @@
 # Journal des versions
 
+## 0.3.1 — 14 novembre 2026
+- Listes de A à Z, à la française (« Écorce » avec les E, majuscules ignorées, guillemets du début ignorés : « Two Guns » Miller aux T) : ingrédients de À traiter et des Réglages, Mon bar (catégories, familles, variantes), lieux de Par lieu (le nombre de cocktails reste affiché), recettes.
+- 50 tests.
+
 ## 0.3.0 — 14 novembre 2026
 - **Carte du monde zoomable** : molette et glisser sur PC, pincer et glisser au doigt, double-clic, boutons + / − / Recentrer. Les noms des pays qui ont des cocktails apparaissent à partir du zoom ×2, ceux des villes à partir de ×4 ; choisir un lieu centre la carte sur lui. Traits et points gardent leur épaisseur.
 - **Retour** depuis un cocktail : Cocktails retrouve le lieu choisi, la carte ou la liste, « créé à / évoque », le zoom de la carte, les filtres de la liste et la position dans la page.

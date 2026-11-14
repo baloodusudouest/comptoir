@@ -238,3 +238,29 @@ def test_redeposer_un_livre_deja_importe(navigateur, adresse, taille, tmp_path):
     page.get_by_role("button", name="Réimporter à neuf").wait_for()
     sans_debordement(page)
     assert erreurs == []
+
+
+
+@pytest.mark.parametrize("taille", TAILLES)
+def test_preparer_en_litres(navigateur, adresse, taille):
+    """Daïquiri de la maison : 6 + 3 + 2 = 11 cl par verre ; 1,1 litre = dix fois la recette (60 cl de rhum)."""
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    page.goto(adresse + "/#/cocktails")
+    page.locator("ul[aria-label=Recettes] li").filter(has_text="Daïquiri de la maison").first.click()
+    page.get_by_role("button", name="Litres").click()
+    champ = page.get_by_label("Nombre de litres")
+    champ.fill("1,1")
+    champ.press("Enter")
+    page.get_by_text("≈ 10 verres de 11 cl, avant la glace").wait_for()
+    page.get_by_text("60 cl", exact=True).wait_for()
+    page.get_by_role("button", name="Un quart de litre de plus").click()           # 1,35 l
+    page.get_by_text("73,64 cl", exact=True).wait_for()
+    for _ in range(3):
+        page.get_by_role("button", name="Un quart de litre de plus").click()       # 2,1 l : les cl passent en litres
+    page.get_by_text("1,15 l", exact=True).wait_for()
+    sans_debordement(page)
+    page.get_by_role("link", name="Préparer").click()                              # le volume suit dans Préparer
+    page.get_by_text("1,15 l", exact=False).first.wait_for()
+    assert page.get_by_label("Nombre de litres").input_value() == "2,1"
+    sans_debordement(page)
+    assert erreurs == []

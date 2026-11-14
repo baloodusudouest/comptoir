@@ -42,6 +42,29 @@ export function quantite(q, verres = 1) {
   return String(v).replace('.', ',')
 }
 
+// ---------------------------------------------------------------- verres ou litres
+// Volume, en cl, des unités du livre (les quantités sont déjà converties en cl à la lecture : ml, oz…).
+// Les lignes sans quantité (« compléter avec du soda ») ne comptent pas : le volume d'un verre est celui des
+// ingrédients mesurés, avant la glace.
+const CL_PAR_UNITE = { cl: 1, shot: 3, 'cuillère à soupe': 1.5, 'cuillère à café': 0.5, 'cuillère de bar': 0.5, cuillère: 0.5,
+                       trait: 0.1, goutte: 0.005, pinte: 50, tasse: 25 }
+
+export function volumeVerre(lignes) {
+  return lignes.reduce((s, l) => s + (l.quantite != null && !l.facultatif && CL_PAR_UNITE[l.unite] ? l.quantite * CL_PAR_UNITE[l.unite] : 0), 0)
+}
+
+const nombre = (v) => String(Math.round(v * 100) / 100).replace('.', ',')
+
+// Quantité d'une ligne pour un facteur (2 verres → 2 ; 1,5 litre d'un verre de 12 cl → 12,5).
+// Au-delà d'un litre, les cl passent en litres ; ce qui se compte (feuilles, zestes, œufs) s'arrondit au demi.
+export function dose(l, facteur = 1) {
+  if (l.quantite == null) return ''
+  const v = l.quantite * facteur
+  if (l.unite === 'cl') return v >= 100 ? `${nombre(v / 100)} l` : `${nombre(v)} cl`
+  const arrondi = CL_PAR_UNITE[l.unite] || Number.isInteger(facteur) ? v : Math.max(0.5, Math.round(v * 2) / 2)
+  return `${nombre(arrondi)} ${l.unite}`.trim()
+}
+
 // « Évoque le Mexique » : noms des lieux d'une recette
 export function nomsLieux(ids) {
   return ids.map((i) => etat.lieux.get(i)?.nom).filter(Boolean).join(', ')

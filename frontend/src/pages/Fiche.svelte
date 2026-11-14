@@ -1,15 +1,14 @@
 <script>
   // Fiche d'un cocktail : le livre et la page du livre papier pour le retrouver sur l'étagère,
-  // la note du livre, les lieux, les ingrédients (ce qui manque en orange) recalculés pour N verres, la préparation,
+  // la note du livre, les lieux, les ingrédients (ce qui manque en orange) recalculés pour N verres ou N litres, la préparation,
   // le verre et la déco, puis ce que le livre en dit (avis, origine, variante, autre nom).
   import { onMount } from 'svelte'
   import ArrowLeft from '@lucide/svelte/icons/arrow-left'
   import Star from '@lucide/svelte/icons/star'
-  import Minus from '@lucide/svelte/icons/minus'
-  import Plus from '@lucide/svelte/icons/plus'
   import Martini from '@lucide/svelte/icons/martini'
   import { api } from '$lib/api.js'
-  import { recharger, quantite } from '$lib/donnees.svelte.js'
+  import { recharger, dose } from '$lib/donnees.svelte.js'
+  import Portions from '$lib/components/Portions.svelte'
   import { Button } from '$lib/components/ui/button/index.js'
   import Vignette from '$lib/components/Vignette.svelte'
   import Editeur from '$lib/components/Editeur.svelte'
@@ -17,7 +16,9 @@
   let { id, session } = $props()
   let r = $state(null)
   let erreur = $state('')
-  let verres = $state(1)
+  let facteur = $state(1)                      // 2 verres → 2 ; 1,5 l d'un verre de 12 cl → 12,5
+  let reglage = $state({ mode: 'verres', verres: 1, litres: 1 })
+  let lienPreparer = $derived(reglage.mode === 'litres' ? `litres=${reglage.litres}` : `verres=${reglage.verres}`)
   // Rubriques du livre : le service (verre, déco) près de la préparation, le reste (avis, origine, variante…) en dessous
   const SERVICE = ['Verre', 'Déco']
   let service = $derived((r?.infos ?? []).filter((i) => SERVICE.includes(i.nom)))
@@ -93,16 +94,12 @@
       <section aria-labelledby="titre-ingredients" class="mt-8">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 id="titre-ingredients" class="text-lg font-medium">Ingrédients</h2>
-          <div class="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Nombre de verres">
-            <button type="button" class="grid size-8 place-items-center rounded-full hover:bg-secondary disabled:opacity-40" aria-label="Un verre de moins" disabled={verres <= 1} onclick={() => verres--}><Minus class="size-4" /></button>
-            <span class="min-w-20 text-center text-sm tabular-nums">{verres} {verres > 1 ? 'verres' : 'verre'}</span>
-            <button type="button" class="grid size-8 place-items-center rounded-full hover:bg-secondary disabled:opacity-40" aria-label="Un verre de plus" disabled={verres >= 8} onclick={() => verres++}><Plus class="size-4" /></button>
-          </div>
+          <Portions lignes={r.lignes} bind:facteur bind:reglage />
         </div>
         <ul class="mt-3 divide-y">
           {#each r.lignes as l}
             <li class="flex items-baseline gap-3 py-2.5">
-              <span class="w-24 shrink-0 text-right tabular-nums text-muted-foreground">{quantite(l.quantite, verres)} {l.unite}</span>
+              <span class="w-24 shrink-0 text-right tabular-nums text-muted-foreground">{dose(l, facteur)}</span>
               <span class={l.present || l.facultatif ? '' : 'text-primary'}>
                 {l.nom || l.texte}
                 {#if l.facultatif}<span class="text-sm text-muted-foreground"> (facultatif)</span>{/if}
@@ -141,7 +138,7 @@
       {/if}
 
       <div class="mt-10 flex flex-wrap gap-2">
-        <Button size="lg" href={`#/cocktail/${r.id}/preparer?verres=${verres}`}><Martini class="size-4" aria-hidden="true" /> Préparer</Button>
+        <Button size="lg" href={`#/cocktail/${r.id}/preparer?${lienPreparer}`}><Martini class="size-4" aria-hidden="true" /> Préparer</Button>
         <Button size="lg" variant="outline" onclick={() => (edition = true)}>Corriger</Button>
         {#if r.etat === 'a_verifier'}
           <Button size="lg" variant="ghost" onclick={ignorer}>Ce n'est pas une recette</Button>

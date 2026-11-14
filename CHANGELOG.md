@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 0.4.0 — 14 novembre 2026
+- **Verres ou litres** sur la fiche et en mode Préparer : un nombre de verres (1 à 50, au lieu de 8), ou un volume en litres (0,1 à 20 l, au quart de litre ou saisi) pour un pichet ou un punch. En litres, l'appli dit à combien de verres cela correspond (« ≈ 10 verres de 11 cl, avant la glace »). Le volume d'un verre est celui des ingrédients mesurés : un « compléter avec… » sans quantité ne compte pas.
+- Quantités : au-delà d'un litre, les cl passent en litres ; ce qui se compte (feuilles, zestes, œufs) s'arrondit au demi quand le facteur n'est pas entier.
+- Le choix (verres ou litres) suit dans le mode Préparer.
+- 52 tests.
+
 ## 0.3.1 — 14 novembre 2026
 - Listes de A à Z, à la française (« Écorce » avec les E, majuscules ignorées, guillemets du début ignorés : « Two Guns » Miller aux T) : ingrédients de À traiter et des Réglages, Mon bar (catégories, familles, variantes), lieux de Par lieu (le nombre de cocktails reste affiché), recettes.
 - 50 tests.

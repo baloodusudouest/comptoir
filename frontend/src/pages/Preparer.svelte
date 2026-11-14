@@ -1,18 +1,22 @@
 <script>
-  // Mode Préparer : plein écran, une étape à la fois, en grand. Ingrédients à cocher, quantités pour N verres,
+  // Mode Préparer : plein écran, une étape à la fois, en grand. Ingrédients à cocher, quantités pour N verres ou N litres,
   // écran maintenu allumé, boutons larges et balayage pour avancer (mains mouillées).
   // Une colonne sur téléphone ; ingrédients | étape à partir de la largeur d'une tablette.
   import { onMount } from 'svelte'
   import X from '@lucide/svelte/icons/x'
-  import Minus from '@lucide/svelte/icons/minus'
-  import Plus from '@lucide/svelte/icons/plus'
   import Check from '@lucide/svelte/icons/check'
   import { api } from '$lib/api.js'
-  import { quantite } from '$lib/donnees.svelte.js'
+  import { dose } from '$lib/donnees.svelte.js'
+  import Portions from '$lib/components/Portions.svelte'
 
   let { id } = $props()
   let r = $state(null)
-  let verres = $state(Math.min(8, Math.max(1, Number(new URLSearchParams(location.hash.split('?')[1] || '').get('verres')) || 1)))
+  // ?verres=3 ou ?litres=1.5, venus de la fiche
+  const parametres = new URLSearchParams(location.hash.split('?')[1] || '')
+  const reglage = parametres.get('litres')
+    ? { mode: 'litres', verres: 1, litres: Math.min(20, Math.max(0.1, Number(parametres.get('litres')) || 1)) }
+    : { mode: 'verres', verres: Math.min(50, Math.max(1, Math.round(Number(parametres.get('verres')) || 1))), litres: 1 }
+  let facteur = $state(reglage.mode === 'verres' ? reglage.verres : 1)
   let etape = $state(0)
   let coches = $state(new Set())
   let eveille = $state('')          // « Écran maintenu allumé » ou la raison de l'échec
@@ -68,11 +72,7 @@
        ontouchstart={toucher} ontouchend={relacher} role="presentation">
     <header class="flex items-center justify-between gap-3">
       <a href={`#/cocktail/${r.id}`} class="flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm"><X class="size-4" aria-hidden="true" /> Quitter</a>
-      <div class="flex items-center gap-1 rounded-full border p-1" role="group" aria-label="Nombre de verres">
-        <button type="button" class="grid size-10 place-items-center rounded-full hover:bg-secondary disabled:opacity-40" aria-label="Un verre de moins" disabled={verres <= 1} onclick={() => verres--}><Minus class="size-5" /></button>
-        <span class="min-w-20 text-center tabular-nums">{verres} {verres > 1 ? 'verres' : 'verre'}</span>
-        <button type="button" class="grid size-10 place-items-center rounded-full hover:bg-secondary disabled:opacity-40" aria-label="Un verre de plus" disabled={verres >= 8} onclick={() => verres++}><Plus class="size-5" /></button>
-      </div>
+      <Portions lignes={r.lignes} bind:facteur {reglage} grand />
     </header>
 
     <h1 class="carte-nom mt-5 text-2xl md:text-3xl">{r.titre}</h1>
@@ -95,7 +95,7 @@
                   {#if coches.has(i)}<Check class="size-4 text-primary" />{/if}
                 </span>
                 <span class="min-w-0">
-                  <span class="tabular-nums font-medium">{quantite(l.quantite, verres)} {l.unite}</span>
+                  <span class="tabular-nums font-medium">{dose(l, facteur)}</span>
                   <span class={coches.has(i) ? 'line-through' : ''}>{l.nom || l.texte}</span>
                 </span>
               </button>

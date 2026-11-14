@@ -184,7 +184,7 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 - Photo, nom, étoile Favori ; le livre et la page du livre papier (« Mon livre, p. 42-43 »), pour retrouver la recette dans le livre sur l'étagère.
 - Lieux : « Créé à : La Havane, Cuba (livre) » ; « Évoque : Mexique (règle) ». Clic sur un lieu → liste de ce lieu.
 - Note du livre en étoiles, à côté de la page.
-- Ingrédients avec quantités, ceux qui manquent en orange ; sélecteur du nombre de verres (1 à 8).
+- Ingrédients avec quantités, ceux qui manquent en orange ; sélecteur **Verres** (1 à 50) ou **Litres** (0,1 à 20 l, avec l'équivalent en verres), repris par le mode Préparer.
 - Préparation, puis le verre et la déco ; « Dans le livre » : avis, origine, variante, autre nom.
 - Bouton **Préparer** → mode Préparer. Bouton **Corriger** → éditeur.
 

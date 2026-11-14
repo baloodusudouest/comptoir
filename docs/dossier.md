@@ -164,7 +164,7 @@ Volume : `/data` (comptoir.db, livres/, photos/, cache/).
 
 ## 3. Parcours des clics et des écrans
 
-Navigation : rail à gauche sur PC, pilule en bas sur téléphone. Cinq entrées : **Au bar** (ouverture), **Cocktails**, **Mon bar**, **À traiter**, **Réglages**. Pas d'écran Connexion de services : les sources extérieures (Wikidata, Mistral) sont dans Réglages, avec un voyant et un bouton **Vérifier**.
+Navigation : rail à gauche sur PC, pilule en bas sur téléphone. Six entrées (le plafond du format commun) : **Au bar** (ouverture), **Cocktails** (avec ses onglets Par lieu et Conseils), **Mon bar**, **À traiter**, **Connexion** (Wikidata, Mistral), **Réglages**.
 
 Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derrière une tuile, d'où l'ouverture sur **Au bar**.
 

@@ -1,4 +1,4 @@
-"""Serveur de démonstration : Comptoir avec les deux livres inventés importés et un bar à moitié rempli.
+"""Serveur de démonstration : Comptoir avec les trois livres inventés importés et un bar à moitié rempli.
 
 Sert aux tests d'écran et aux captures. Rien n'est demandé à Internet : Wikidata et Mistral sont simulés.
 Usage : python -m tools.demo [port]   (mot de passe : demo-demo-demo)
@@ -18,7 +18,7 @@ sys.path.insert(0, str(RACINE))
 
 from app import main  # noqa: E402
 from app.config import Config  # noqa: E402
-from tools.fabrique import livre_sans_reperes, livre_scriptorium  # noqa: E402
+from tools.fabrique import livre_deux_colonnes, livre_sans_reperes, livre_scriptorium  # noqa: E402
 
 MDP = "demo-demo-demo"
 
@@ -58,7 +58,7 @@ def preparer(data: Path) -> None:
     configurer(data)
     with TestClient(main.app) as c:
         c.post("/api/connexion", json={"mot_de_passe": MDP})
-        for livre in (livre_scriptorium(), livre_sans_reperes()):
+        for livre in (livre_scriptorium(), livre_sans_reperes(), livre_deux_colonnes()):
             c.post("/api/livres/import", content=livre)
         for ing in ("rhum-blanc", "citron-vert", "sirop-sucre", "gin-london-dry", "vermouth-rouge", "tequila", "menthe", "citron", "rye", "eau-gazeuse", "angostura"):
             c.post("/api/bar", json={"ingredient": ing, "present": True})

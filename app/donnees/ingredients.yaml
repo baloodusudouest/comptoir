@@ -12,10 +12,10 @@
       nom: Rhum
       alias: [rhum, rum]
       variantes:
-        - {id: rhum-blanc, nom: Rhum blanc, alias: [rhum blanc, rhum léger, white rum, light rum, rhum cubain]}
+        - {id: rhum-blanc, nom: Rhum blanc, alias: [rhum blanc, rhum léger, white rum, light rum, rhum cubain, bacardi carta blanca, bacardi heritage]}
         - {id: rhum-ambre, nom: Rhum ambré, alias: [rhum ambré, rhum doré, gold rum, rhum vieux léger]}
         - {id: rhum-brun, nom: Rhum brun, alias: [rhum brun, rhum noir, dark rum, rhum jamaïcain]}
-        - {id: rhum-agricole, nom: Rhum agricole, alias: [rhum agricole, rhum agricole blanc]}
+        - {id: rhum-agricole, nom: Rhum agricole, alias: [rhum agricole, rhum agricole blanc, clément canne bleue, clément]}
         - {id: rhum-vieux, nom: Rhum vieux, alias: [rhum vieux, rhum hors d'âge, aged rum]}
         - {id: rhum-epice, nom: Rhum épicé, alias: [rhum épicé, spiced rum]}
         - {id: cachaca, nom: Cachaça, alias: [cachaça, cachaca]}
@@ -45,7 +45,7 @@
       alias: [mezcal, mescal]
     - id: whisky
       nom: Whisky
-      alias: [whisky, whiskey]
+      alias: [whisky, whiskey, jack daniel's, tennessee whiskey]
       variantes:
         - {id: bourbon, nom: Bourbon, alias: [bourbon, bourbon whiskey]}
         - {id: rye, nom: Rye whiskey, alias: [rye, rye whiskey, whisky de seigle]}
@@ -63,7 +63,7 @@
       nom: Brandy
       alias: [brandy, eau-de-vie de vin]
       variantes:
-        - {id: pisco, nom: Pisco, alias: [pisco]}
+        - {id: pisco, nom: Pisco, alias: [pisco, barsol]}
         - {id: calvados, nom: Calvados, alias: [calvados, apple brandy, applejack]}
     - id: eau-de-vie
       nom: Eau-de-vie de fruit
@@ -74,7 +74,10 @@
         - {id: mirabelle, nom: Mirabelle, alias: [eau-de-vie de mirabelle]}
     - id: absinthe
       nom: Absinthe
-      alias: [absinthe]
+      alias: [absinthe, fée parisienne, la fée parisienne, fee parisienne, absinthe supérieure, spirit of louisiana]
+    - id: grappa
+      nom: Grappa
+      alias: [grappa, grappa di moscato]
 
 - id: liqueurs
   nom: Liqueurs
@@ -119,10 +122,10 @@
       alias: [crème de menthe, get 27, get 31]
       variantes:
         - {id: creme-de-menthe-verte, nom: Crème de menthe verte, alias: [crème de menthe verte]}
-        - {id: creme-de-menthe-blanche, nom: Crème de menthe blanche, alias: [crème de menthe blanche]}
+        - {id: creme-de-menthe-blanche, nom: Crème de menthe blanche, alias: [crème de menthe blanche, menthe-pastille giffard, menthe-pastille, menthe pastille]}
     - id: liqueur-cerise
       nom: Liqueur de cerise
-      alias: [liqueur de cerise, cherry brandy, cherry heering]
+      alias: [liqueur de cerise, cherry brandy, cherry heering, heering cherry liqueur, liqueur heering cherry, heering]
       variantes:
         - {id: marasquin, nom: Marasquin, alias: [marasquin, maraschino, liqueur de marasquin]}
     - id: chartreuse
@@ -136,7 +139,7 @@
       alias: [bénédictine, benedictine, dom]
     - id: liqueur-sureau
       nom: Liqueur de sureau
-      alias: [liqueur de sureau, saint-germain, st-germain, st germain]
+      alias: [liqueur de sureau, saint-germain, st-germain, st germain, chase elderflower liqueur, liqueur de fleur de sureau, elderflower liqueur, liqueur de fleurs de sureau]
     - id: falernum
       nom: Falernum
       alias: [falernum]
@@ -154,23 +157,86 @@
       alias: [liqueur de melon, midori]
     - id: liqueur-coco
       nom: Liqueur de coco
-      alias: [liqueur de coco, malibu]
+      alias: [liqueur de coco, malibu, koko kanu, liqueur koko kanu, koko kanu liqueur]
     - id: creme-irlandaise
       nom: Crème de whiskey
       alias: [crème de whiskey, baileys, irish cream, crème irlandaise]
     - id: pastis
       nom: Pastis
-      alias: [pastis, anisette, ricard, pernod, liqueur anisée]
+      alias: [pastis, anisette, ricard, pernod, liqueur anisée, sambuca, sambuca noire, herbsaint]
     - id: amer-orange
       nom: Apéritif amer
-      alias: [apéritif amer, bitter italien]
+      alias: [apéritif amer, bitter italien, bitter bianco, liqueur bitter bianco]
       variantes:
         - {id: campari, nom: Campari, alias: [campari]}
         - {id: aperol, nom: Aperol, alias: [aperol, apérol]}
         - {id: suze, nom: Suze, alias: [suze, liqueur de gentiane]}
     - id: amaro
       nom: Amaro
-      alias: [amaro, fernet, fernet-branca, cynar, montenegro]
+      alias: [amaro, fernet, fernet-branca, cynar, montenegro, jägermeister, jagermeister, becherovka, liqueur becherovka, picon, ferro china, liqueur ferro china, cardamaro, rabarbaro, kamm & sons, china-china, élixir combier, amer picon]
+    - id: liqueur-gingembre
+      nom: Liqueur de gingembre
+      alias: [liqueur de gingembre, liqueur king's ginger, king's ginger, ginger cordial, stone's green ginger wine, stone's original, stone's ginger wine]
+    - id: strega
+      nom: Strega
+      alias: [strega, liqueur strega]
+    - id: licor-43
+      nom: Licor 43
+      alias: [licor 43, licor 43 original, cuarenta y tres]
+    - id: punsch
+      nom: Punsch suédois
+      alias: [punsch suédois, punch suédois, punsch, carlshamns flaggpunsch, carishamns flaggpunsch]
+    - id: liqueur-banane
+      nom: Liqueur de banane
+      alias: [liqueur de banane, crème de banane, banane du brésil giffard, banane du brésil]
+    - id: advocaat
+      nom: Advocaat
+      alias: [advocaat, liqueur advocaat, warninks advocaat, liqueur warninks advocaat]
+    - id: liqueur-mandarine
+      nom: Liqueur de mandarine
+      alias: [liqueur de mandarine, mandarine napoléon, liqueur de mandarine napoléon]
+    - id: liqueur-poire
+      nom: Liqueur de poire
+      alias: [liqueur de poire, belle de brillet, liqueur de poires williams]
+    - id: liqueur-litchi
+      nom: Liqueur de litchi
+      alias: [liqueur de litchi, kwai feh]
+    - id: liqueur-noisette
+      nom: Liqueur de noisette
+      alias: [liqueur de noisette, frangelico]
+    - id: liqueur-noix
+      nom: Liqueur de noix
+      alias: [liqueur de noix, nocello]
+    - id: mastiha
+      nom: Mastiha
+      alias: [mastiha, liqueur mastiha, liqueur de mastiha, skinos]
+    - id: kummel
+      nom: Kummel
+      alias: [kummel, kümmel, kummel mentzendorff]
+    - id: southern-comfort
+      nom: Southern Comfort
+      alias: [southern comfort, liqueur southern comfort]
+    - id: parfait-amour
+      nom: Parfait amour
+      alias: [parfait amour, liqueur parfait amour]
+    - id: liqueur-vanille
+      nom: Liqueur de vanille
+      alias: [liqueur de vanille, vanille de madagascar giffard, tuaca, liqueur tuaca]
+    - id: allspice-dram
+      nom: Liqueur de piment de la Jamaïque
+      alias: [allspice dram, st. elizabeth allspice dram, st-elizabeth allspice dram, st elizabeth allspice dram, pimento dram]
+    - id: liqueur-caramel
+      nom: Liqueur de caramel
+      alias: [liqueur de caramel, butterscotch, butterscotch schnapps, liqueur butterscotch schnapps]
+    - id: liqueur-bergamote
+      nom: Liqueur de bergamote
+      alias: [liqueur de bergamote, italicus, italicus rosolio di bergamotto]
+    - id: liqueur-rose
+      nom: Liqueur de rose
+      alias: [liqueur de rose, liqueur de pétale de rose, liqueur de pétales de rose]
+    - id: pimms
+      nom: Pimm's
+      alias: [pimm's, pimm's n° 1, pimm's no 1, pimm's n° 1 cup]
 
 - id: vins
   nom: Vins & bulles
@@ -179,12 +245,12 @@
       nom: Vermouth
       alias: [vermouth, vermout]
       variantes:
-        - {id: vermouth-rouge, nom: Vermouth rouge, alias: [vermouth rouge, vermouth doux, sweet vermouth, vermouth rosso, martini rouge]}
+        - {id: vermouth-rouge, nom: Vermouth rouge, alias: [vermouth rouge, vermouth doux, sweet vermouth, vermouth rosso, martini rouge, antica formula carpano, carpano antica formula, antica formula, punt e mes, carpano punt e mes]}
         - {id: vermouth-sec, nom: Vermouth sec, alias: [vermouth sec, vermouth blanc sec, dry vermouth, noilly prat]}
         - {id: vermouth-blanc, nom: Vermouth blanc, alias: [vermouth blanc, vermouth bianco, martini blanc]}
     - id: lillet
       nom: Quinquina
-      alias: [quinquina, lillet, lillet blanc, cocchi americano, byrrh, dubonnet]
+      alias: [quinquina, lillet, lillet blanc, cocchi americano, byrrh, dubonnet, americano bianco cocchi, cocchi americano bianco, rinquinquin, apéritif rinquinquin, pineau des charentes, pineau des charentes blanc, barolo chinato, chinato]
     - id: vin-mousseux
       nom: Vin effervescent
       alias: [vin effervescent, vin mousseux]
@@ -195,7 +261,7 @@
         - {id: cava, nom: Cava, alias: [cava]}
     - id: vin-blanc
       nom: Vin blanc
-      alias: [vin blanc, vin blanc sec]
+      alias: [vin blanc, vin blanc sec, sauvignon blanc, sauvignon, chardonnay, chardonnay blanc, icewine, vin de glace]
     - id: vin-rouge
       nom: Vin rouge
       alias: [vin rouge]
@@ -204,16 +270,28 @@
       alias: [porto, port]
     - id: xeres
       nom: Xérès
-      alias: [xérès, xeres, sherry, fino, amontillado]
+      alias: [xérès, xeres, sherry, fino, amontillado, palo cortado, manzanilla, oloroso, pedro ximénez]
     - id: biere
       nom: Bière
-      alias: [bière, biere, ginger beer alcoolisée]
+      alias: [bière, biere, ginger beer alcoolisée, guinness, stout, stout guinness, lager, pilsner, lager pilsner, pils, budweiser, budweiser budvar]
     - id: cidre
       nom: Cidre
       alias: [cidre]
     - id: sake
       nom: Saké
       alias: [saké, sake]
+    - id: madere
+      nom: Madère
+      alias: [madère, madeira, vin de madère, blandy's]
+    - id: marsala
+      nom: Marsala
+      alias: [marsala, vin marsala]
+    - id: vin-rose
+      nom: Vin rosé
+      alias: [vin rosé, rosé, white zinfandel]
+    - id: hydromel
+      nom: Hydromel
+      alias: [hydromel]
 
 - id: sirops
   nom: Sirops
@@ -227,7 +305,7 @@
       alias: [sirop d'orgeat, orgeat]
     - id: grenadine
       nom: Grenadine
-      alias: [grenadine, sirop de grenadine]
+      alias: [grenadine, sirop de grenadine, sirop de grenade]
     - id: sirop-miel
       nom: Sirop de miel
       alias: [sirop de miel, miel]
@@ -253,6 +331,15 @@
         - {id: sirop-menthe, nom: Sirop de menthe, alias: [sirop de menthe]}
         - {id: sirop-violette, nom: Sirop de violette, alias: [sirop de violette]}
         - {id: sirop-sureau, nom: Sirop de sureau, alias: [sirop de sureau, cordial de sureau]}
+        - {id: sirop-lavande, nom: Sirop de lavande, alias: [sirop de lavande]}
+        - {id: sirop-litchi, nom: Sirop de litchi, alias: [sirop de litchi]}
+        - {id: sirop-groseille, nom: Sirop de groseille, alias: [sirop de groseille]}
+        - {id: sirop-rose, nom: Sirop de rose, alias: [sirop de rose]}
+        - {id: sirop-rhubarbe, nom: Sirop de rhubarbe, alias: [sirop de rhubarbe]}
+        - {id: sirop-pasteque, nom: Sirop de pastèque, alias: [sirop de pastèque]}
+    - id: sirop-caramel
+      nom: Sirop de caramel
+      alias: [sirop de caramel, sirop de caramel salé]
 
 - id: jus
   nom: Jus & fruits
@@ -273,19 +360,19 @@
     - id: pamplemousse
       nom: Pamplemousse
       frais: true
-      alias: [pamplemousse, jus de pamplemousse, grapefruit]
+      alias: [pamplemousse, jus de pamplemousse, grapefruit, pomelo, jus de pomelo, pomelo ruby red]
     - id: ananas
       nom: Ananas
       alias: [ananas, jus d'ananas]
     - id: canneberge
       nom: Jus de canneberge
-      alias: [jus de canneberge, cranberry, jus de cranberry, canneberge]
+      alias: [jus de canneberge, cranberry, jus de cranberry, canneberge, jus d'airelles, airelles, jus d'airelle]
     - id: pomme
       nom: Jus de pomme
       alias: [jus de pomme, pomme]
     - id: tomate
       nom: Jus de tomate
-      alias: [jus de tomate, tomate]
+      alias: [jus de tomate, tomate, clamato, jus mott's clamato]
     - id: fruit-passion
       nom: Fruit de la passion
       frais: true
@@ -297,14 +384,39 @@
     - id: fruits-rouges
       nom: Fruits rouges
       frais: true
-      alias: [fruits rouges, framboises, fraises, mûres, myrtilles, framboise, fraise]
+      alias: [fruits rouges, framboises, fraises, mûres, myrtilles, framboise, fraise, myrtille, myrtille fraîche, groseilles]
     - id: concombre
       nom: Concombre
       frais: true
       alias: [concombre]
     - id: lait-coco
       nom: Crème de coco
-      alias: [crème de coco, lait de coco, coco lopez]
+      alias: [crème de coco, lait de coco, coco lopez, sirop de noix de coco, sirop de coco]
+    - id: poire
+      nom: Jus de poire
+      alias: [jus de poire, poire, nectar de poire]
+    - id: banane
+      nom: Banane
+      frais: true
+      alias: [banane, banane fraîche]
+    - id: kiwi
+      nom: Kiwi
+      frais: true
+      alias: [kiwi, kiwi frais]
+    - id: grenade
+      nom: Jus de grenade
+      alias: [jus de grenade, grenade]
+    - id: mangue
+      nom: Mangue
+      alias: [mangue, purée de mangue, purée de mangues]
+    - id: pasteque
+      nom: Pastèque
+      frais: true
+      alias: [pastèque, pastèque fraîche]
+    - id: raisin
+      nom: Raisin
+      frais: true
+      alias: [raisin, raisins, grains de raisin, grains de raisin blanc, grains de raisin noir, raisins rouges, raisins blancs]
 
 - id: sodas
   nom: Sodas
@@ -359,7 +471,7 @@
     - id: creme
       nom: Crème
       frais: true
-      alias: [crème, crème liquide, crème fraîche liquide, crème entière]
+      alias: [crème, crème liquide, crème fraîche liquide, crème entière, double-crème, double crème, crème double]
     - id: lait
       nom: Lait
       frais: true
@@ -383,7 +495,7 @@
       alias: [gingembre, gingembre frais]
     - id: tabasco
       nom: Sauce piquante
-      alias: [tabasco, sauce piquante]
+      alias: [tabasco, sauce piquante, sauce pimentée, sauce au piment]
     - id: worcestershire
       nom: Sauce Worcestershire
       alias: [sauce worcestershire, worcestershire]
@@ -400,7 +512,7 @@
     - id: sel
       nom: Sel
       toujours_la: true
-      alias: [sel, sel de céleri, fleur de sel]
+      alias: [sel, sel de céleri, fleur de sel, solution saline, eau salée]
     - id: sucre
       nom: Sucre
       toujours_la: true
@@ -416,6 +528,31 @@
     - id: cafe
       nom: Café
       alias: [café, expresso, espresso, café serré]
+    - id: the
+      nom: Thé
+      alias: [thé, thé froid, thé noir, thé vert, earl grey, english breakfast, lapsang souchong, rooibos, oolong, camomille, thé au jasmin]
+    - id: clou-girofle
+      nom: Clou de girofle
+      alias: [clou de girofle, clous de girofle]
+    - id: vanille
+      nom: Vanille
+      alias: [vanille, gousse de vanille, extrait de vanille]
+    - id: cardamome
+      nom: Cardamome
+      alias: [cardamome, gousses de cardamome]
+    - id: herbes
+      nom: Herbes fraîches
+      frais: true
+      alias: [sauge, sauge fraîche, romarin, romarin frais, coriandre, coriandre fraîche, thym, citronnelle, estragon, aneth]
+    - id: raifort
+      nom: Raifort
+      alias: [raifort, sauce au raifort]
+    - id: vinaigre
+      nom: Vinaigre
+      alias: [vinaigre, vinaigre balsamique, vinaigre balsamique blanc, vinaigre de malt]
+    - id: confiture
+      nom: Confiture
+      alias: [confiture, confiture d'abricot, confiture d'abricots, marmelade]
 
 - id: garnitures
   nom: Garnitures
@@ -437,3 +574,7 @@
     - id: celeri
       nom: Branche de céleri
       alias: [branche de céleri, céleri]
+    - id: physalis
+      nom: Physalis
+      alias: [physalis]
+

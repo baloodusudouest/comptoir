@@ -115,9 +115,10 @@ NOMBRES = {"un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "si
 # unité écrite → (unité gardée, facteur vers cette unité)
 UNITES = [
     (r"cl|centilitres?", "cl", 1), (r"ml|millilitres?", "cl", 0.1), (r"oz|onces?", "cl", 3),
-    (r"c\.? ?(?:a|à) ?s\.?|cuill[eè]res? (?:a|à) soupe|cs", "cuillère à soupe", 1),
-    (r"c\.? ?(?:a|à) ?c\.?|cuill[eè]res? (?:a|à) caf[eé]|cc", "cuillère à café", 1),
-    (r"cuill[eè]res? de bar|bar ?spoons?", "cuillère de bar", 1),
+    (r"c\.? ?(?:a|à) ?s\.?|cuill[eè]r[ée]?e?s? (?:a|à) soupe|cs", "cuillère à soupe", 1),
+    (r"c\.? ?(?:a|à) ?c\.?|cuill[eè]r[ée]?e?s? (?:a|à) caf[eé]|cc", "cuillère à café", 1),
+    (r"cuill[eè]r[ée]?e?s? de bar|bar ?spoons?", "cuillère de bar", 1),
+    (r"cuill[eè]r[ée]es?|cuill[eè]res?", "cuillère", 1), (r"shots?", "shot", 1), (r"pintes?", "pinte", 1),
     (r"traits?|dash(?:es)?|giclées?", "trait", 1), (r"gouttes?|drops?", "goutte", 1),
     (r"zestes?", "zeste", 1), (r"feuilles?", "feuille", 1), (r"brins?|branches?", "brin", 1),
     (r"tranches?|rondelles?", "tranche", 1), (r"quartiers?", "quartier", 1), (r"pinc[ée]es?", "pincée", 1),
@@ -183,7 +184,9 @@ def lire_ligne(texte: str) -> Ligne:
                     quantite = round(quantite * facteur, 2)
                 break
         t = t[m.end():]
-    nom = re.sub(r"^(?:de |d'|d’|du |des )", "", t.strip(), flags=re.I)
+    t = re.sub(r"^(?:compl[ée]ter|allonger|remplir|top(?:per)?|finir)\s+(?:avec\s+|de\s+)?", "", t.strip(), flags=re.I)
+    nom = re.sub(r"^(?:de la |de l'|de l’|de |d'|d’|du |des )", "", t.strip(), flags=re.I)
+    nom = re.sub(r"\s+fra[iî]chement\s+(?:press[ée]e?s?|moulue?s?|r[âa]p[ée]e?s?)|\s+press[ée]e?s?$", "", nom, flags=re.I)
     nom = re.sub(r"\([^)]*\)", "", nom)                      # précisions entre parenthèses
     facultatif = bool(FACULTATIF.search(brut))
     nom = re.split(r",| pour | \(", nom)[0].strip(" .;:")

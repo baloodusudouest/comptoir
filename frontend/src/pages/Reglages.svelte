@@ -1,5 +1,5 @@
 <script>
-  // Réglages : les livres (déposer, supprimer avec corbeille de 30 jours), les sources extérieures,
+  // Réglages : les livres (déposer, supprimer avec corbeille de 30 jours),
   // les équivalences d'ingrédients, le journal (avec Annuler), la version et la déconnexion.
   import { onMount } from 'svelte'
   import Upload from '@lucide/svelte/icons/upload'
@@ -13,7 +13,6 @@
   let { session, deconnecter } = $props()
   let livres = $state([])
   let corbeille = $state([])
-  let sources = $state([])
   let journal = $state([])
   let equivalences = $state([])
   let ingredients = $state([])
@@ -22,7 +21,6 @@
   let envoi = $state(false)
   let aSupprimer = $state(null)     // aperçu de la suppression en attente de confirmation
   let aRestaurer = $state(null)     // livre en corbeille proposé à la place d'un nouvel import
-  let verifs = $state({})
   let eqA = $state('')
   let eqB = $state('')
 
@@ -31,8 +29,8 @@
   const date = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
 
   async function charger() {
-    ;[livres, corbeille, sources, journal, equivalences] = await Promise.all(
-      ['/api/livres', '/api/corbeille', '/api/sources', '/api/journal', '/api/equivalences'].map((c) => api.get(c)))
+    ;[livres, corbeille, journal, equivalences] = await Promise.all(
+      ['/api/livres', '/api/corbeille', '/api/journal', '/api/equivalences'].map((c) => api.get(c)))
   }
   async function deposer(e) {
     const fichier = e.currentTarget.files?.[0]
@@ -43,7 +41,8 @@
     aRestaurer = null
     try {
       const r = await api.envoyer(`/api/livres/import?nom=${encodeURIComponent(fichier.name)}`, fichier)
-      message = `« ${r.titre} » : ${r.recettes} recettes lues${r.a_verifier ? `, dont ${r.a_verifier} à vérifier dans À traiter` : ''}.`
+      message = `« ${r.titre} » : ${r.recettes} recettes lues${r.a_verifier ? `, dont ${r.a_verifier} à vérifier dans À traiter` : ''}`
+        + `${r.conseils ? `, et ${r.conseils} conseil${r.conseils > 1 ? 's' : ''} rangé${r.conseils > 1 ? 's' : ''} dans Cocktails › Conseils` : ''}.`
         + (r.a_reperes_page ? '' : ' Ce livre ne porte pas les pages du livre papier : aucune page ne sera affichée.')
       await Promise.all([charger(), recharger()])
     } catch (err) {
@@ -68,10 +67,6 @@
     erreur = ''
     message = 'Livre restauré, avec ses favoris et ses corrections.'
     await Promise.all([charger(), recharger()])
-  }
-  async function verifier(s) {
-    verifs[s.id] = { message: 'Vérification…' }
-    verifs[s.id] = await api.post(`/api/sources/${s.id}/verifier`)
   }
   async function annuler(j) {
     try {
@@ -152,25 +147,6 @@
       </ul>
     </section>
   {/if}
-
-  <section class={bloc} aria-labelledby="titre-sources">
-    <h2 id="titre-sources" class="text-lg font-semibold">Sources extérieures</h2>
-    <ul class="mt-2 divide-y">
-      {#each sources as s (s.id)}
-        <li class="py-3">
-          <div class="flex items-center justify-between gap-3">
-            <span class="flex items-center gap-2 font-medium">
-              <span class={`size-2.5 rounded-full ${s.actif ? 'bg-valide' : 'bg-muted-foreground/50'}`} aria-hidden="true"></span>
-              {s.nom} <span class="text-sm font-normal text-muted-foreground">{s.actif ? 'actif' : `coupé (${s.reglage})`}</span>
-            </span>
-            <Button variant="outline" size="sm" onclick={() => verifier(s)}>Vérifier</Button>
-          </div>
-          <p class="mt-1 text-sm text-muted-foreground">{s.role}</p>
-          {#if verifs[s.id]}<p class={`mt-1 text-sm ${verifs[s.id].ok ? 'text-valide' : verifs[s.id].ok === false ? 'text-destructive' : ''}`} role="status">{verifs[s.id].message}</p>{/if}
-        </li>
-      {/each}
-    </ul>
-  </section>
 
   <section class={bloc} aria-labelledby="titre-equivalences">
     <h2 id="titre-equivalences" class="text-lg font-semibold">Équivalences d'ingrédients</h2>

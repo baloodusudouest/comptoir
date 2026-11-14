@@ -1,5 +1,19 @@
 # Journal des versions
 
+## 0.2.0 — 14 novembre 2026 — réglé sur un vrai livre
+- Découpage réglé sur un vrai livre de 2 978 recettes mis en page en deux colonnes : toutes ont leur page, 1 806 leur photo ;
+  les lignes d'ingrédients sans ingrédient reconnu passent de 232 à 195 sur 13 338.
+  - colonnes de quantités suivies de colonnes de noms (« 30 ml », « 15 ml »… puis « de rhum… », « de xérès… ») : appariées dans l'ordre quand les nombres concordent ;
+  - rubriques du livre (Verre, Déco, Méthode, Mon avis, Origine, Variante, Autre nom) et note en étoiles rangées à part ; la préparation est tirée de « Méthode » ;
+  - lieu de création lu d'abord dans les parenthèses de la rubrique « Origine » ;
+  - arbre des ingrédients porté à 213 nœuds (marques, liqueurs, thé, herbes…).
+- **Conseils** : nouvel onglet de Cocktails. Les passages du livre qui ne sont pas des recettes (glace, techniques, verres, matériel…) y sont rangés par thème, avec leur page ; recherche et filtre par thème. Les encadrés répétés (légende des étoiles) sont écartés.
+- Fiche : note du livre en étoiles, verre et déco, « Dans le livre » (avis, origine, variante). Le mode Préparer montre le verre et la déco.
+- Écran **Connexion** (format commun) : une tuile par service (Wikidata, Mistral), avec voyant, ce qu'il lit, ce qu'il écrit, réglage, derniers appels et Vérifier. Sorti des Réglages.
+- Base d'une 0.1 mise à niveau au démarrage (colonnes `infos` et `note`, table `conseil`). Un livre déjà importé n'a ni rubriques ni conseils : le supprimer puis le réimporter.
+- Livres inventés des tests fabriqués à date fixe : le test du doublon en corbeille échouait au hasard (une seconde d'écart changeait l'empreinte).
+- 43 tests (nouveau livre inventé en deux colonnes, mise à niveau de la base, écrans Conseils et Connexion).
+
 ## 0.1.1 — 14 novembre 2026
 - Icône propre à Comptoir (verre à cocktail et rondelle d'orange amer), à la place de celle reprise du squelette.
 

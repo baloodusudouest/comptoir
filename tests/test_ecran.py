@@ -150,6 +150,43 @@ def test_a_traiter_et_reglages(navigateur, adresse, taille):
     page.get_by_text("Supprimer « Cocktails du port » ?").wait_for()
     page.get_by_text("Le livre reste 30 jours dans la corbeille").wait_for()
     page.get_by_role("button", name="Garder").click()                            # rien n'est supprimé
-    page.get_by_text("Wikidata").first.wait_for()
+    sans_debordement(page)
+    assert erreurs == []
+
+
+@pytest.mark.parametrize("taille", TAILLES)
+def test_connexion_des_services(navigateur, adresse, taille):
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    page.goto(adresse + "/#/connexion")
+    page.get_by_role("heading", name="Connexion").wait_for()
+    page.get_by_role("button", name="Wikidata").click()
+    page.get_by_text("Ce qu'il écrit").wait_for()
+    page.get_by_text("Rien chez Wikidata").wait_for()
+    page.get_by_role("button", name="Vérifier").click()
+    page.get_by_text("Wikidata répond.").wait_for()                              # le faux Wikidata de la démonstration
+    page.get_by_role("button", name="Mistral").click()
+    page.get_by_text("COMPTOIR_MISTRAL_CLE").wait_for()
+    sans_debordement(page)
+    assert erreurs == []
+
+
+@pytest.mark.parametrize("taille", TAILLES)
+def test_conseils_et_rubriques_du_livre(navigateur, adresse, taille):
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    page.goto(adresse + "/#/cocktails/conseils")
+    page.get_by_role("heading", name="Glace", exact=True).wait_for()             # le thème
+    sans_debordement(page)
+    page.get_by_role("link", name="Glace").first.click()
+    page.get_by_role("heading", name="Glace", level=2).wait_for()
+    page.get_by_text("Bible du port, p. 31").wait_for()
+    page.get_by_text("un gros glaçon fond plus lentement", exact=False).wait_for()
+    sans_debordement(page)
+    # La fiche montre la note du livre, le verre, la déco et ce que le livre en dit
+    page.goto(adresse + "/#/cocktails")
+    page.get_by_role("link", name="Triangle du Port").first.click()
+    page.get_by_role("img", name="Note du livre : 4 sur 5").wait_for()
+    page.get_by_text("zeste d'orange", exact=True).wait_for()               # mis en capitale par le CSS seulement
+    page.get_by_role("heading", name="Dans le livre").wait_for()
+    page.get_by_text("Mon avis").wait_for()
     sans_debordement(page)
     assert erreurs == []

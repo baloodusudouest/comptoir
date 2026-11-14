@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from app import main
-from tools.fabrique import livre_drm, livre_sans_reperes, livre_scriptorium
+from tools.fabrique import livre_deux_colonnes, livre_drm, livre_sans_reperes, livre_scriptorium
 
 
 def importer(client, contenu, nom="livre.epub"):
@@ -16,6 +16,65 @@ def par_titre(client):
 
 
 # ------------------------------------------------------------------ import et page du livre papier
+
+def test_livre_en_deux_colonnes_rubriques_et_etoiles(client):
+    """Quantités puis noms en colonnes (« 30 ml », « 15 ml »… puis « de rhum ambré »…), rubriques VERRE / DÉCO / MON AVIS /
+    ORIGINE, note en étoiles : tout est rangé, et la parenthèse de l'origine donne le lieu de création."""
+    r = importer(client, livre_deux_colonnes()).json()
+    assert r["recettes"] == 2 and r["a_verifier"] == 0 and r["conseils"] == 1
+    recettes = par_titre(client)
+    assert recettes["Triangle du Port"]["note"] == 4
+    fiche = client.get(f"/api/recettes/{recettes['Triangle du Port']['id']}").json()
+    assert [l["texte"] for l in fiche["lignes"]] == ["30 ml de rhum ambré", "15 ml de jus d'ananas", "2 traits d'Angostura"]
+    assert fiche["etapes"] == ["FRAPPER tous les ingrédients avec de la glace et filtrer dans le verre refroidi."]
+    infos = {i["nom"]: i["texte"] for i in fiche["infos"]}
+    assert infos["Verre"] == "coupe" and infos["Déco"] == "zeste d'orange" and "inventé" in infos["Mon avis"]
+    assert "VERRE" not in fiche["chapeau"] and "★" not in fiche["chapeau"]
+    assert any(l["lieu"] == "bordeaux" and l["sorte"] == "cree_a" for l in fiche["lieux"])
+    assert fiche["pages"] == "p. 30"
+
+
+def test_conseils_du_livre(client):
+    """Les passages qui ne sont pas des recettes vont dans « Conseils » ; la légende des étoiles répétée sur chaque page n'y va pas."""
+    vide = client.get("/api/conseils").json()
+    assert vide == {"conseils": [], "themes": [], "livres": 0}
+    importer(client, livre_deux_colonnes())
+    liste = client.get("/api/conseils").json()
+    assert [c["titre"] for c in liste["conseils"]] == ["Glace"]          # « Conseil du barman pour la glace » → « Glace »
+    c = liste["conseils"][0]
+    assert c["theme"] == "Glace" and c["pages"] == "p. 31" and c["livre"] == "Bible du port" and c["apercu"].startswith("Une glace")
+    assert liste["themes"] == ["Glace"] and liste["livres"] == 1
+    detail = client.get(f"/api/conseils/{c['id']}").json()
+    assert len(detail["contenu"]) == 2 and all(x["sorte"] == "para" for x in detail["contenu"])
+    assert not any("EXCELLENT" in x["texte"] for x in detail["contenu"])
+    # Le livre dans la corbeille : ses conseils disparaissent aussi, et reviennent avec lui
+    livre_id = c["livre_id"]
+    client.delete(f"/api/livres/{livre_id}")
+    assert client.get("/api/conseils").json()["conseils"] == []
+    assert client.get(f"/api/conseils/{c['id']}").status_code == 404
+    client.post(f"/api/livres/{livre_id}/restaurer")
+    assert len(client.get("/api/conseils").json()["conseils"]) == 1
+
+
+def test_base_de_la_version_0_1_mise_a_niveau(tmp_path):
+    """Une base créée par la 0.1 (sans colonnes infos et note, sans table conseil) s'ouvre et reçoit ce qui manque."""
+    import sqlite3
+    from app.base import Base
+    tmp_path.mkdir(exist_ok=True)
+    ancienne = sqlite3.connect(tmp_path / "comptoir.db")
+    ancienne.executescript("""CREATE TABLE livre (id INTEGER PRIMARY KEY, titre TEXT, auteur TEXT, fichier TEXT, empreinte TEXT UNIQUE,
+                                                  a_reperes_page INTEGER, importe_le TEXT, supprime_le TEXT);
+                              CREATE TABLE recette (id INTEGER PRIMARY KEY, livre_id INTEGER, ordre INTEGER, titre TEXT, page_debut TEXT,
+                                                    page_fin TEXT, chapeau TEXT, etapes TEXT, texte_original TEXT, photo INTEGER,
+                                                    confiance REAL, etat TEXT, source TEXT, modifie_le TEXT);
+                              INSERT INTO livre VALUES (1, 'Ancien', '', 'a.epub', 'x', 0, '2026-11-01', NULL);
+                              INSERT INTO recette VALUES (1, 1, 0, 'Vieux', NULL, NULL, '', '[]', '', 0, 1, 'valide', 'regles', NULL);""")
+    ancienne.commit()
+    ancienne.close()
+    b = Base(tmp_path)
+    r = b.un("SELECT infos, note FROM recette WHERE id = 1")
+    assert r["infos"] == "{}" and r["note"] is None
+    assert b.lire("SELECT * FROM conseil") == []
 
 def test_import_et_pages_du_livre_papier(client):
     r = importer(client, livre_scriptorium()).json()

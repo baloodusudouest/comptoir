@@ -1,9 +1,14 @@
 # Comptoir — dossier de conception
 
-Version 0.3 du dossier, 14/11/2026. Écrit après un grill (questions de cadrage), puis revu après un passage au conseil (cinq avis indépendants, relecture croisée, synthèse).
+Version 0.4 du dossier, 14/11/2026. Écrit après un grill (questions de cadrage), puis revu après un passage au conseil (cinq avis indépendants, relecture croisée, synthèse).
 Couleur : orange amer `#e0884a`.
 
 Version publique : les valeurs réelles (adresses, noms, chemins) passent par les variables de la stack, jamais par ce dépôt.
+
+**Changements de la v0.4 : conseils du livre et écran Connexion**
+- Onglet **Conseils** dans Cocktails : les pages du livre sur la préparation, la glace, les verres et le matériel, rangées par thème (§ 3).
+- Fiche : note du livre, verre, déco, avis, origine, variante.
+- Écran **Connexion** des services, sorti des Réglages.
 
 **Changements de la v0.3 : page du livre papier**
 - Chaque recette montre la **page du livre papier** d'où elle vient (« p. 42 », ou « p. 42-43 » pour une recette sur deux pages), dans les listes et sur la fiche.
@@ -172,13 +177,15 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 
 ### Cocktails
 - Liste de toutes les recettes, filtres : livre, spiritueux, faisable/il manque/tout, favoris. Sous chaque nom : le livre et la page du livre papier (« Mon livre, p. 42-43 »), quand elle est connue.
+- Onglet **Conseils** : les passages des livres qui ne sont pas des recettes (préparation, glace, verres, matériel, ingrédients), rangés par thème, avec livre et page ; recherche ; un clic ouvre le passage en grands caractères. Vide tant qu'aucun livre n'en contient, avec un message.
 - Onglet **Par lieu** : liste emboîtée pays > région > ville avec compteurs, interrupteur « créé à / évoque / les deux » (seulement « évoque » si « créé à » n'est pas retenu) ; bouton **Carte** : carte du monde embarquée, un point par lieu avec son nombre ; clic sur un point → liste filtrée.
 
 ### Fiche cocktail
 - Photo, nom, étoile Favori ; le livre et la page du livre papier (« Mon livre, p. 42-43 »), pour retrouver la recette dans le livre sur l'étagère.
 - Lieux : « Créé à : La Havane, Cuba (livre) » ; « Évoque : Mexique (règle) ». Clic sur un lieu → liste de ce lieu.
+- Note du livre en étoiles, à côté de la page.
 - Ingrédients avec quantités, ceux qui manquent en orange ; sélecteur du nombre de verres (1 à 8).
-- Préparation.
+- Préparation, puis le verre et la déco ; « Dans le livre » : avis, origine, variante, autre nom.
 - Bouton **Préparer** → mode Préparer. Bouton **Corriger** → éditeur.
 
 ### Mode Préparer (téléphone, PC, puis tablette)
@@ -200,10 +207,12 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 - **Lieux évoqués ambigus** → Oui / Non / Autre lieu.
 - **Livres en cours d'import** → avancement, nombre de recettes lues et à vérifier.
 
+### Connexion
+- Une tuile par service (Wikidata, Mistral) avec voyant ; ouverte : ce qu'il lit, ce qu'il écrit, le réglage de la stack, les derniers appels, **Vérifier**.
+
 ### Réglages
 - **Livres** : déposer un EPUB, liste des livres (recettes, à vérifier), **Supprimer** un livre et tous ses cocktails, avec confirmation.
 - **Corbeille** : livres supprimés depuis moins de 30 jours, date d'effacement prévue, **Restaurer**.
-- **Sources** : Wikidata/Wikipédia, Mistral : voyant, Vérifier, dernières demandes.
 - **Équivalences** d'ingrédients.
 - Journal des modifications avec Annuler (corrections, rattachements, lieux).
 - Version, déconnexion.
@@ -226,7 +235,9 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 ```
 livre(id, titre, auteur, fichier, empreinte, a_reperes_page, importe_le, etat, supprime_le)   -- supprime_le rempli = dans la corbeille ; effacé 30 jours après
 recette(id, livre_id, titre, slug, page_debut, page_fin, chapeau, preparation_json, photo,
-        confiance, etat[a_verifier|valide|ignore], source[regles|mistral|main], cree_le, modifie_le)
+        confiance, etat[a_verifier|valide|ignore], source[regles|mistral|main], cree_le, modifie_le,
+        infos_json, note)                                   -- rubriques du livre (Verre, Déco, Mon avis…) et étoiles
+conseil(id, livre_id, ordre, titre, theme, page_debut, page_fin, contenu_json)   -- passages qui ne sont pas des recettes
 ligne_ingredient(id, recette_id, ordre, texte_original, quantite, unite, ingredient_id, facultatif)
 ingredient(id, nom, parent_id, niveau[categorie|famille|variante], toujours_la, frais, sans_alcool)
 ingredient_alias(id, ingredient_id, texte)                 -- noms vus dans les livres
@@ -296,3 +307,9 @@ Reporté après le conseil. Exigences retenues pour la reprise :
 - **Pas de tri « Livres en cours d'import »** dans À traiter : l'import est assez rapide pour se faire pendant la demande ; la tuile n'a pas lieu d'être.
 - **Proposition de rattachement** d'un ingrédient inconnu : seulement si la ressemblance est forte (85 %), sinon on choisit soi-même.
 - **Données embarquées** : 164 ingrédients et 129 lieux au départ, à compléter avec le vrai livre.
+
+## Décisions de la 0.2 (14/11/2026)
+
+- **Sonde faite** sur un vrai livre de 2 978 recettes : toutes ont leur page, 1 806 leur photo, 254 un lieu évoqué sûr. « Créé à » reste affiché : la rubrique « Origine » des livres le donne souvent entre parenthèses.
+- **Conseils** (demande de Julien) : onglet de Cocktails plutôt qu'entrée de navigation, pour rester à six entrées. Rempli à l'import ; il attend le scan du livre complet.
+- **Connexion** sorti des Réglages, comme le veut le format commun.

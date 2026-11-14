@@ -76,6 +76,11 @@
     </header>
 
     <h1 class="carte-nom mt-5 text-2xl md:text-3xl">{r.titre}</h1>
+    {#if (r.infos ?? []).some((i) => i.nom === 'Verre' || i.nom === 'Déco')}
+      <p class="mt-1 flex flex-wrap gap-x-5 text-muted-foreground">
+        {#each r.infos.filter((i) => i.nom === 'Verre' || i.nom === 'Déco') as i}<span>{i.nom} : <span class="text-foreground">{i.texte}</span></span>{/each}
+      </p>
+    {/if}
     {#if eveille}<p class="mt-1 text-xs text-muted-foreground" role="status">{eveille}</p>{/if}
 
     <div class="mt-6 grid flex-1 gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-12">

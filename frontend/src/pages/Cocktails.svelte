@@ -1,5 +1,7 @@
 <script>
-  // Cocktails : toutes les recettes (filtres) ou « Par lieu » (liste pays › région › ville, et carte embarquée).
+  // Cocktails : toutes les recettes (filtres), « Par lieu » (liste pays › région › ville, et carte embarquée)
+  // ou « Conseils » (les pages des livres qui ne sont pas des recettes).
+  import Conseils from './Conseils.svelte'
   import Star from '@lucide/svelte/icons/star'
   import MapIcon from '@lucide/svelte/icons/map'
   import List from '@lucide/svelte/icons/list'
@@ -7,7 +9,7 @@
   import CarteCocktail from '$lib/components/CarteCocktail.svelte'
   import CarteMonde from '$lib/components/CarteMonde.svelte'
 
-  let { sous = '' } = $props()
+  let { sous = '', detail = null } = $props()
 
   // ---------------------------------------------------------------- liste
   let livre = $state('')
@@ -42,12 +44,15 @@
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <h1 class="titre">Cocktails</h1>
   <nav aria-label="Vue" class="flex rounded-full border p-1 text-sm">
-    <a href="#/cocktails" aria-current={sous !== 'lieux' ? 'page' : undefined} class="rounded-full px-4 py-1.5 text-muted-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-foreground">Tous</a>
+    <a href="#/cocktails" aria-current={sous !== 'lieux' && sous !== 'conseils' ? 'page' : undefined} class="rounded-full px-4 py-1.5 text-muted-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-foreground">Tous</a>
     <a href="#/cocktails/lieux" aria-current={sous === 'lieux' ? 'page' : undefined} class="rounded-full px-4 py-1.5 text-muted-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-foreground">Par lieu</a>
+    <a href="#/cocktails/conseils" aria-current={sous === 'conseils' ? 'page' : undefined} class="rounded-full px-4 py-1.5 text-muted-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-foreground">Conseils</a>
   </nav>
 </header>
 
-{#if sous !== 'lieux'}
+{#if sous === 'conseils'}
+  <Conseils id={detail} />
+{:else if sous !== 'lieux'}
   <div class="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filtres">
     <label class="flex h-9 items-center rounded-full border px-3 text-sm"><span class="sr-only">Livre</span>
       <select bind:value={livre} class="max-w-56 bg-transparent outline-none">

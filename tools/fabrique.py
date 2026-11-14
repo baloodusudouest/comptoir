@@ -12,6 +12,15 @@ import zipfile
 from PIL import Image, ImageDraw
 
 
+
+def _ecrire(z: zipfile.ZipFile, nom, contenu, compress_type: int = zipfile.ZIP_DEFLATED) -> None:
+    """Chaque fichier de l'archive porte la même date : deux fabrications du même livre donnent les mêmes octets
+    (sinon l'empreinte change d'une seconde à l'autre et le test de doublon échoue au hasard)."""
+    info = nom if isinstance(nom, zipfile.ZipInfo) else zipfile.ZipInfo(nom)
+    info.date_time = (2026, 1, 1, 0, 0, 0)
+    info.compress_type = compress_type
+    z.writestr(info, contenu)
+
 def _image(couleur: tuple[int, int, int]) -> bytes:
     im = Image.new("RGB", (480, 360), couleur)
     d = ImageDraw.Draw(im)
@@ -25,8 +34,8 @@ def _epub(titre: str, auteur: str, pages: list[tuple[str, str]], images: dict[st
     """pages : (nom du fichier, corps XHTML). Archive EPUB 3 minimale et valide (mimetype en tête, non compressé)."""
     t = io.BytesIO()
     with zipfile.ZipFile(t, "w") as z:
-        z.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
-        z.writestr("META-INF/container.xml", """<?xml version="1.0"?>
+        _ecrire(z, zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+        _ecrire(z, "META-INF/container.xml", """<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
 <rootfiles><rootfile full-path="EPUB/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>""")
         manif = ['<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>']
@@ -34,19 +43,19 @@ def _epub(titre: str, auteur: str, pages: list[tuple[str, str]], images: dict[st
         for i, (nom, corps) in enumerate(pages):
             manif.append(f'<item id="p{i}" href="{nom}" media-type="application/xhtml+xml"/>')
             spine.append(f'<itemref idref="p{i}"/>')
-            z.writestr(f"EPUB/{nom}", f"""<?xml version="1.0" encoding="utf-8"?>
+            _ecrire(z, f"EPUB/{nom}", f"""<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="fr"><head><title>{titre}</title></head>
 <body>{corps}</body></html>""")
         for j, (nom, octets) in enumerate(images.items()):
             manif.append(f'<item id="img{j}" href="images/{nom}" media-type="image/jpeg"/>')
-            z.writestr(f"EPUB/images/{nom}", octets)
+            _ecrire(z, f"EPUB/images/{nom}", octets)
         pl = ""
         if liste_pages:
             pl = '<nav epub:type="page-list" hidden=""><ol>' + "".join(f'<li><a href="{h}">{n}</a></li>' for h, n in liste_pages) + "</ol></nav>"
-        z.writestr("EPUB/nav.xhtml", f"""<?xml version="1.0" encoding="utf-8"?>
+        _ecrire(z, "EPUB/nav.xhtml", f"""<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Sommaire</title></head>
 <body><nav epub:type="toc"><ol><li><a href="{pages[0][0]}">Début</a></li></ol></nav>{pl}</body></html>""")
-        z.writestr("EPUB/content.opf", f"""<?xml version="1.0" encoding="utf-8"?>
+        _ecrire(z, "EPUB/content.opf", f"""<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
 <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:essai-{abs(hash(titre)) % 10**8}</dc:identifier>
 <dc:title>{titre}</dc:title><dc:creator>{auteur}</dc:creator><dc:language>fr</dc:language></metadata>
@@ -84,6 +93,28 @@ def livre_scriptorium() -> bytes:
     return _epub("Cocktails du port", "Auteur Inventé", fichiers, {"daiquiri.jpg": _image((180, 120, 70))}, liste)
 
 
+def livre_deux_colonnes() -> bytes:
+    """Livre inventé mis en page comme une bible du bar : quantités puis noms en colonnes, rubriques, étoiles,
+    un « conseil du barman » et une légende des notes répétée sur chaque page (qui ne doit pas devenir un conseil)."""
+    legende = "<h2>APPRÉCIATION DES COCKTAILS</h2><p>★★★★★ EXCELLENT</p><p>BON</p><p>PASSABLE</p>"
+    pages = [
+        (30, legende + "<h1>TRIANGLE DU PORT</h1><ul><li>30 ml</li><li>15 ml</li><li>2 traits</li></ul>"
+             "<p>de rhum ambré</p><p>de jus d'ananas</p><p>d'Angostura</p>"
+             "<p>MÉTHODE : FRAPPER tous les ingrédients avec de la glace et filtrer dans le verre refroidi.</p>"
+             "<p>VERRE : coupe</p><p>DÉCO : zeste d'orange</p><p>MON AVIS : un cocktail inventé pour les essais, rond et fruité.</p>"
+             "<p>ORIGINE : créé en 2020 au bar des quais (Bordeaux, France).</p><p>★★★★☆</p>"),
+        (31, legende + "<h2>CONSEIL DU BARMAN POUR LA GLACE</h2>"
+             "<p>Une glace bien froide et bien sèche dilue moins le cocktail : on la sort du congélateur au dernier moment, "
+             "on remplit le shaker aux deux tiers et on ne garde jamais la glace qui a déjà servi pour frapper.</p>"
+             "<p>Pour un verre servi sur glace, un gros glaçon fond plus lentement que plusieurs petits.</p>"),
+        (32, legende + "<h1>VERT DES QUAIS</h1><ul><li>45 ml</li><li>15 ml</li></ul><p>de gin</p><p>de sirop de sucre</p>"
+             "<p>MÉTHODE : REMUER avec de la glace et filtrer.</p><p>VERRE : coupe</p><p>★★★☆☆</p>"),
+    ]
+    fichiers = [(f"p{i + 1:04d}.xhtml", _page(n, corps)) for i, (n, corps) in enumerate(pages)]
+    liste = [(f"p{i + 1:04d}.xhtml#page-{n}", str(n)) for i, (n, _) in enumerate(pages)]
+    return _epub("Bible du port", "Auteur Inventé", fichiers, {}, liste)
+
+
 def livre_sans_reperes() -> bytes:
     corps1 = """<h1>Chapitre un : la soirée</h1><p>Quelques recettes pour commencer.</p>
 <h2>Manhattan</h2><ul><li>5 cl de rye</li><li>2 cl de vermouth rouge</li><li>2 traits d'Angostura</li><li>Une cerise au marasquin</li></ul>
@@ -100,5 +131,5 @@ def livre_sans_reperes() -> bytes:
 def livre_drm() -> bytes:
     t = io.BytesIO(livre_sans_reperes())
     with zipfile.ZipFile(t, "a") as z:
-        z.writestr("META-INF/encryption.xml", '<encryption><EncryptedData><EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/></EncryptedData></encryption>')
+        _ecrire(z, "META-INF/encryption.xml", '<encryption><EncryptedData><EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/></EncryptedData></encryption>')
     return t.getvalue()

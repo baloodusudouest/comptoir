@@ -46,6 +46,19 @@ class RecetteLue:
     texte_original: str
     confiance: float
     raisons: list[str] = field(default_factory=list)
+    infos: dict = field(default_factory=dict)      # rubriques du livre : Verre, Déco, Mon avis, Origine, Variante, Autre nom
+    note: int | None = None                         # étoiles du livre (★★★★☆ → 4)
+
+
+@dataclass
+class ConseilLu:
+    """Passage du livre qui n'est pas une recette : la glace, les verres, l'art de remuer…"""
+    titre: str
+    theme: str
+    contenu: list[dict]                             # [{"sorte": "para" | "li_ul" | "li_ol" | "sous_titre", "texte": …}]
+    page_debut: str | None = None
+    page_fin: str | None = None
+    niveau: int = 0
 
 
 @dataclass
@@ -55,9 +68,152 @@ class LivreLu:
     a_reperes_page: bool
     recettes: list[RecetteLue]
     images: dict[str, bytes]
+    conseils: list[ConseilLu] = field(default_factory=list)
 
 
 TITRES = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
+# Rubriques d'une fiche (« VERRE : martini », « MÉTHODE : FRAPPER… ») : rangées à part, jamais prises pour des ingrédients
+RUBRIQUES = [
+    (r"verre", "Verre"), (r"d[ée]cor?", "Déco"), (r"m[ée]thode|pr[ée]paration", "Méthode"), (r"mon avis|avis", "Mon avis"),
+    (r"origine?|histoire", "Origine"), (r"variantes?|autre possibilit[ée]", "Variante"), (r"pseudo|autres? noms?|alias", "Autre nom"),
+]
+RUBRIQUE = re.compile(r"^(" + "|".join(m for m, _ in RUBRIQUES) + r")\s*:\s*(.*)$", re.I | re.S)
+NOTE = re.compile(r"^[★☆✩✭\*]{3,5}$")
+QUANTITE_SEULE = re.compile(r"^(?:\d+(?:[.,]\d+)?|[½¼¾⅓⅔])(?:\s*(?:ml|cl|oz|traits?|dash(?:es)?|gouttes?|pinc[ée]es?|cuill[eè]r[ée]es?|shots?))?(?:\s+(?:de|d'|du))?$", re.I)
+FIN_PHRASE = (".", "!", "?", "»", ":", "…")
+
+
+def rubrique(texte: str) -> tuple[str, str] | None:
+    m = RUBRIQUE.match(texte.strip())
+    if not m:
+        return None
+    for motif, nom in RUBRIQUES:
+        if re.fullmatch(motif, m.group(1), re.I):
+            return nom, m.group(2).strip()
+    return None
+
+
+DEBUT_NOM = re.compile(r"^(?:de |d'|d’|du |des |de la |de l')", re.I)
+
+
+def apparier_colonnes(blocs: list[Bloc]) -> list[Bloc]:
+    """Livre en deux colonnes lu colonne par colonne : « 30 ml », « 15 ml », « 22,5 ml », puis « de rhum… »,
+    « de xérès… », « de jus d'ananas ». Quand le nombre de quantités et le nombre de noms concordent, on les apparie
+    dans l'ordre ; sinon on ne touche à rien (la recette part dans « À traiter » si elle est mal lue)."""
+    sortie: list[Bloc] = []
+    i, n = 0, len(blocs)
+    texte = lambda b: b.sorte in ("para", "li_ul", "li_ol")   # noqa: E731
+    while i < n:
+        b = blocs[i]
+        if not (texte(b) and QUANTITE_SEULE.match(b.texte.strip())):
+            sortie.append(b)
+            i += 1
+            continue
+        # une suite de quantités seules (les images et repères de page intercalés sont gardés à part)
+        quantites, autres, j = [], [], i
+        while j < n and (blocs[j].sorte in ("image", "page") or (texte(blocs[j]) and QUANTITE_SEULE.match(blocs[j].texte.strip()))):
+            (quantites if texte(blocs[j]) else autres).append(blocs[j])
+            j += 1
+        if len(quantites) < 2 or j >= n or not (texte(blocs[j]) and DEBUT_NOM.match(blocs[j].texte.strip())):
+            sortie.extend(blocs[i:j])
+            i = j
+            continue
+        # les noms qui suivent : un nouveau nom commence par « de / d' / du… », le reste continue le nom en cours
+        noms: list[str] = []
+        k = j
+        while k < n and blocs[k].sorte != "titre":
+            c = blocs[k]
+            if c.sorte in ("image", "page"):
+                autres.append(c)
+                k += 1
+                continue
+            ct = c.texte.strip()
+            if rubrique(ct) or NOTE.match(ct) or (not noms and not DEBUT_NOM.match(ct)):
+                break
+            if DEBUT_NOM.match(ct) and not (noms and noms[-1].endswith(("/", "(", ","))):
+                noms.append(ct)
+            elif noms:
+                noms[-1] = noms[-1] + ("" if noms[-1].endswith(("/", "(")) else " ") + ct
+            k += 1
+        if len(noms) == len(quantites):
+            sortie.extend(Bloc("li_ul", f"{q.texte.strip()} {nom}") for q, nom in zip(quantites, noms))
+            sortie.extend(autres)
+            i = k
+        else:
+            sortie.extend(blocs[i:j])
+            i = j
+    return sortie
+
+
+def recoller(blocs: list[Bloc]) -> list[Bloc]:
+    """Recolle ce que la mise en page a coupé (livre en colonnes, lu page par page) :
+    - « 15 ml » puis « de Velvet Falernum » : la quantité et le nom lus séparément ;
+    - « 15 ml de sirop de sucre (2 parts de sucre/ » puis « 1 part d'eau) » : une ligne coupée en deux ;
+    - « MÉTHODE : FRAPPER… avec », une image, puis « de la glace et filtrer… » : une phrase coupée par une image.
+    Les images et les repères de page restent à leur place ; un titre arrête toujours le recollage."""
+    sortie: list[Bloc] = []
+    dernier = None                     # indice du dernier bloc de texte dans « sortie »
+    for b in apparier_colonnes(blocs):
+        if b.sorte in ("image", "page"):
+            sortie.append(b)
+            continue
+        if b.sorte == "titre":
+            sortie.append(b)
+            dernier = None
+            continue
+        texte = b.texte.strip()
+        if dernier is not None:
+            p = sortie[dernier]
+            pt = p.texte.rstrip()
+            coupee = pt.endswith((",", "/", "(", "-", "–"))
+            quantite_seule = bool(QUANTITE_SEULE.match(pt) or re.match(r"^\d+[.)]$", pt)) and not QUANTITE_SEULE.match(texte)
+            coupee = coupee or bool(re.search(r"\s(?:de|d'|d’|du|des|la|le|à)$", pt)) or bool(re.match(r"^\d+\s+ans\b", texte))
+            suite = (texte[:1].islower() or texte[:1] in "%)") and not pt.endswith(FIN_PHRASE) and not rubrique(texte) \
+                and not NOTE.match(pt) and not commence_par_quantite(texte)
+            if coupee or quantite_seule or suite:
+                colle = "" if pt.endswith(("/", "(", "-")) else " "
+                sorte = "li_ul" if quantite_seule else p.sorte
+                sortie[dernier] = Bloc(sorte, (pt + colle + texte).strip())
+                continue
+        sortie.append(Bloc(b.sorte, texte, b.niveau, b.source))
+        dernier = len(sortie) - 1
+    return sortie
+
+
+PETITS_MOTS = {"de", "du", "des", "la", "le", "les", "et", "à", "au", "aux", "en", "d'", "l'", "sur", "pour", "avec", "of", "the", "and", "a"}
+
+
+def titre_propre(titre: str) -> str:
+    """« DAIQUIRI N°1 (STYLE EL FLORIDITA) » → « Daiquiri N°1 (Style El Floridita) » ; un titre déjà en casse mixte est gardé."""
+    lettres = [c for c in titre if c.isalpha()]
+    if not lettres or not all(c.isupper() for c in lettres):
+        return titre
+    mots = titre.lower().split()
+    res = []
+    for i, m in enumerate(mots):
+        if i and m in PETITS_MOTS:
+            res.append(m)
+            continue
+        if i and re.match(r"^(d|l)['’]", m):          # « zeste d'orange » : l'élision reste en minuscule
+            res.append(m[:2] + m[2:3].upper() + m[3:])
+            continue
+        j = next((k for k, c in enumerate(m) if c.isalpha()), None)
+        if j is None:
+            res.append(m)
+        else:
+            m = m[:j] + m[j].upper() + m[j + 1:]
+            if re.match(r"^(d|l)['’]", m, re.I):       # « D'Artagnan »
+                m = m[:2] + m[2:3].upper() + m[3:]
+            res.append(m)
+    return " ".join(res)
+
+
+def etapes_methode(texte: str) -> list[str]:
+    """« FRAPPER… et filtrer. COMPLÉTER avec du champagne. » → une étape par phrase."""
+    phrases = re.split(r"(?<=[.!?])\s+(?=[A-ZÉÈÀÇ0-9«])", texte.strip())
+    return [p.strip() for p in phrases if p.strip()]
+
+
 ETIQUETTES = re.compile(r"^(ingr[ée]dients?|pr[ée]paration|m[ée]thode|recette|la recette|r[ée]alisation|"
                         r"pour \d+ (verres?|personnes?|cocktails?)|ustensiles?)\s*:?$", re.I)
 EPUB_NS = "{http://www.idpf.org/2007/ops}type"
@@ -193,7 +349,7 @@ def _est_ligne_ingredient(b: Bloc, arbre: Arbre, dans_suite: bool) -> bool:
     if b.sorte not in ("para", "li_ul", "li_ol"):
         return False
     t = b.texte
-    if ETIQUETTES.match(t):
+    if ETIQUETTES.match(t) or rubrique(t) or NOTE.match(t):
         return False
     if commence_par_quantite(t):
         return len(t) < 120
@@ -208,12 +364,54 @@ ORIGINE = re.compile(
     r"(?:[^.]{0,80}?)\b(?:à|au|aux|en)\s+([A-ZÉÈÀ][\w'’\-]+(?:\s+(?:[A-ZÉÈÀ][\w'’\-]+|de|du|des|d'))*)", re.U)
 
 
-def origine_ecrite(texte: str) -> list[str]:
-    """Noms de lieux après « créé à / inventé au … » dans le chapeau ou la préparation (vérifiés ensuite contre les lieux connus)."""
-    return [m.group(1).strip(" .,") for m in ORIGINE.finditer(texte or "")]
+def origine_ecrite(texte: str, rubrique_origine: str = "") -> list[str]:
+    """Noms de lieux possibles pour la création, dans l'ordre où les essayer (vérifiés ensuite contre les lieux connus) :
+    d'abord les parenthèses de la rubrique « ORIGINE » (« au Purple Bar (Londres, Angleterre) » → Londres, puis Angleterre),
+    puis ce qui suit « créé à / inventé au … », dans la rubrique puis dans le chapeau ou la préparation."""
+    noms = []
+    for groupe in re.findall(r"\(([^()]{2,80})\)", rubrique_origine or ""):
+        noms += [x.strip(" .") for x in groupe.split(",") if x.strip(" .")]
+    for t in (rubrique_origine, texte):
+        noms += [m.group(1).strip(" .,") for m in ORIGINE.finditer(t or "")]
+    return noms
+
+
+CONSEIL_MIN = 200          # caractères de texte au moins : écarte les encadrés répétés (« Appréciation des cocktails »)
+PREFIXE_CONSEIL = re.compile(r"^conseils? du barman\s*(?:[-–:]\s*|(?:pour|sur)\s+)(?:les |le |la |l['’])?", re.I)
+THEMES = [                 # (thème, mots cherchés dans le titre puis dans le début du texte)
+    ("Verres", r"verres?\b|verrerie|coupe|flûte|tumbler|highball|old[- ]fashioned"),
+    ("Matériel", r"matériel|ustensiles?|shaker boston|passoire|jigger|doseur|mesures?\b|doses?\b|cuill[eè]res?"),
+    ("Techniques", r"technique|frapper|remuer|filtr|mélang|rolling|pilon|mixer|superpos|étages|shake|flamb|throwing|dilution"),
+    ("Glace", r"glace|glaçons?"),
+    ("Ingrédients", r"sirops?|jus|bitters?|amers?|liqueurs?|spiritueux|garnitures?|décor|sucre|œufs?|agrumes?"),
+]
+
+
+def titre_conseil(titre: str) -> str:
+    """« CONSEIL DU BARMAN POUR LA GLACE » → « Glace » ; « LES VERRES » → « Les verres »."""
+    t = PREFIXE_CONSEIL.sub("", titre.strip()) or titre.strip()
+    lettres = [c for c in t if c.isalpha()]
+    if lettres and all(c.isupper() for c in lettres):
+        t = t.lower()
+    return t[:1].upper() + t[1:]
+
+
+def theme_conseil(titre: str, contenu: list[dict]) -> str:
+    debut = " ".join(c["texte"] for c in contenu)[:400]
+    for texte in (titre, debut):
+        for nom, motif in THEMES:
+            if re.search(motif, texte, re.I):
+                return nom
+    return "Autres"
 
 
 def decouper(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool]:
+    recettes, a_reperes, _ = decouper_tout(blocs, arbre)
+    return recettes, a_reperes
+
+
+def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool, list[ConseilLu]]:
+    blocs = recoller(blocs)
     a_reperes = any(b.sorte == "page" for b in blocs)
     page = None
     pages_avant: list[str | None] = []      # page courante avant chaque bloc
@@ -223,6 +421,8 @@ def decouper(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool]:
         pages_avant.append(page)
     titres = [i for i, b in enumerate(blocs) if b.sorte == "titre"] + [len(blocs)]
     recettes: list[RecetteLue] = []
+    conseils: list[ConseilLu] = []
+    en_cours: ConseilLu | None = None       # passage hors recette en train d'être lu (ses sous-titres s'y ajoutent)
     for k in range(len(titres) - 1):
         debut, fin = titres[k], titres[k + 1]
         section = blocs[debut + 1:fin]
@@ -231,16 +431,51 @@ def decouper(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool]:
             if _est_ligne_ingredient(b, arbre, dans_suite=bool(idx_ing) and idx_ing[-1] >= j - 2):
                 idx_ing.append(j)
         if not idx_ing or not any(commence_par_quantite(section[j].texte) for j in idx_ing):
-            continue                       # pas une recette (titre de chapitre, introduction…)
+            # pas une recette : titre de chapitre, introduction, conseil du barman, page sur les verres…
+            contenu = [{"sorte": b.sorte, "texte": b.texte.strip()} for b in section
+                       if b.sorte in ("para", "li_ul", "li_ol") and b.texte.strip() and not NOTE.match(b.texte)
+                       and not b.texte.lstrip().startswith(("★", "☆"))]
+            if any(rubrique(c["texte"]) for c in contenu) or blocs[debut].texte.strip().endswith(":"):
+                en_cours = None                # recette mal lue ou morceau de fiche : laissé de côté
+                continue
+            textes = [debut + 1 + j for j, b in enumerate(section) if b.sorte in ("para", "li_ul", "li_ol")]
+            page_fin = pages_avant[textes[-1]] if (a_reperes and textes) else None
+            niveau = blocs[debut].niveau
+            if en_cours and niveau > en_cours.niveau and not PREFIXE_CONSEIL.match(blocs[debut].texte.strip()):
+                en_cours.contenu += [{"sorte": "sous_titre", "texte": titre_conseil(blocs[debut].texte)}, *contenu]
+                en_cours.page_fin = page_fin or en_cours.page_fin
+            else:
+                en_cours = ConseilLu(titre=titre_conseil(blocs[debut].texte), theme="", contenu=contenu,
+                                     page_debut=pages_avant[debut] if a_reperes else None, page_fin=page_fin, niveau=niveau)
+                conseils.append(en_cours)
+            continue
+        en_cours = None
         premier, dernier = idx_ing[0], idx_ing[-1]
-        chapeau = [b.texte for b in section[:premier] if b.sorte in ("para", "li_ul", "li_ol") and not ETIQUETTES.match(b.texte)]
+        # Rubriques (« VERRE : », « MÉTHODE : », « MON AVIS : »…) et note en étoiles, où qu'elles soient dans la fiche
+        infos: dict[str, str] = {}
+        note = None
+        rangees: set[int] = set()
+        for j, b in enumerate(section):
+            if b.sorte not in ("para", "li_ul", "li_ol"):
+                continue
+            r = rubrique(b.texte)
+            if r:
+                infos[r[0]] = (infos.get(r[0], "") + " " + r[1]).strip()
+                rangees.add(j)
+            elif NOTE.match(b.texte):
+                note = b.texte.count("★") or b.texte.count("*") or None
+                rangees.add(j)
+        libre = lambda j, b: b.sorte in ("para", "li_ul", "li_ol") and j not in rangees and not ETIQUETTES.match(b.texte)   # noqa: E731
+        chapeau = [b.texte for j, b in enumerate(section[:premier]) if libre(j, b)]
         lignes = [section[j].texte for j in idx_ing]
-        etapes = [b.texte for b in section[dernier + 1:] if b.sorte in ("para", "li_ol", "li_ul") and not ETIQUETTES.match(b.texte)]
-        # Lignes de texte glissées entre les ingrédients (« Verre : coupe ») : gardées dans le chapeau
-        chapeau += [section[j].texte for j in range(premier, dernier) if j not in idx_ing
-                    and section[j].sorte in ("para",) and not ETIQUETTES.match(section[j].texte)]
+        if "Méthode" in infos:
+            etapes = etapes_methode(infos.pop("Méthode"))
+        else:
+            etapes = [b.texte for j, b in enumerate(section) if j > dernier and libre(j, b)]
+        # Lignes de texte glissées entre les ingrédients (« 3 physalis » sans quantité reconnue…) : gardées dans le chapeau
+        chapeau += [section[j].texte for j in range(premier, dernier) if j not in idx_ing and section[j].sorte == "para" and libre(j, section[j])]
         # Fin de la recette : son dernier bloc de texte (la page des images ou des titres suivants ne compte pas)
-        textes = [debut + 1 + j for j, b in enumerate(section) if b.sorte in ("para", "li_ul", "li_ol")]
+        textes = [debut + 1 + j for j, b in enumerate(section) if b.sorte in ("para", "li_ul", "li_ol") and not NOTE.match(b.texte)]
         dernier_bloc = textes[-1] if textes else debut
         page_debut = pages_avant[debut] if a_reperes else None
         page_fin = pages_avant[dernier_bloc] if a_reperes else None
@@ -260,17 +495,46 @@ def decouper(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool]:
             raisons.append(f"{len(illisibles)} ligne(s) d'ingrédient sans quantité ni ingrédient reconnu")
         original = "\n".join([blocs[debut].texte, *[b.texte for b in section if b.sorte != "page" and b.texte]])
         recettes.append(RecetteLue(
-            titre=blocs[debut].texte, lignes=lignes, etapes=etapes, chapeau=" ".join(chapeau).strip(),
+            titre=titre_propre(blocs[debut].texte), lignes=lignes, etapes=etapes, chapeau=" ".join(chapeau).strip(),
             page_debut=page_debut, page_fin=page_fin if page_fin != page_debut else None,
             image=images[0] if images else None, texte_original=original, confiance=round(max(confiance, 0), 2),
-            raisons=raisons))
-    return recettes, a_reperes
+            raisons=raisons, infos=infos, note=note))
+    # Conseils gardés : assez de texte, et pas deux fois le même encadré
+    gardes: list[ConseilLu] = []
+    par_titre: dict[str, int] = {}
+    for c in conseils:
+        deja, propre = set(), []
+        for x in c.contenu:                    # une même ligne répétée (encadré de chaque page) n'est gardée qu'une fois
+            cle_x = (x["sorte"], normaliser(x["texte"]))
+            if cle_x not in deja:
+                deja.add(cle_x)
+                propre.append(x)
+        c.contenu = propre
+        texte = " ".join(x["texte"] for x in c.contenu if x["sorte"] != "sous_titre")
+        if len(texte) < CONSEIL_MIN or not any(len(x["texte"]) >= 120 for x in c.contenu):
+            continue                           # trop court, ou une simple légende (« EXCELLENT », « BON »…)
+        if c.page_fin == c.page_debut:
+            c.page_fin = None
+        cle = normaliser(c.titre)
+        if cle in par_titre:                   # même titre ailleurs dans le livre : on garde le plus complet
+            i = par_titre[cle]
+            ancien = sum(len(x["texte"]) for x in gardes[i].contenu)
+            if len(texte) > ancien:
+                c.theme = theme_conseil(c.titre, c.contenu)
+                gardes[i] = c
+            continue
+        par_titre[cle] = len(gardes)
+        c.theme = theme_conseil(c.titre, c.contenu)
+        if c.page_fin == c.page_debut:
+            c.page_fin = None
+        gardes.append(c)
+    return recettes, a_reperes, gardes
 
 
 def lire(contenu: bytes, arbre: Arbre) -> LivreLu:
     titre, auteur, blocs, images = lire_livre(contenu)
-    recettes, a_reperes = decouper(blocs, arbre)
-    return LivreLu(titre, auteur, a_reperes, recettes, images)
+    recettes, a_reperes, conseils = decouper_tout(blocs, arbre)
+    return LivreLu(titre, auteur, a_reperes, recettes, images, conseils)
 
 
 def texte_pages(r: RecetteLue | dict) -> str:

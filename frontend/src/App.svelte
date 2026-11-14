@@ -1,7 +1,8 @@
 <script>
   // Navigation commune aux applis : rail à gauche sur PC, pilule d'icônes en bas sur iPhone.
-  // Cinq entrées : Au bar (ouverture, le geste répété), Cocktails, Mon bar, À traiter, Réglages.
-  // Adresses : #/ · #/cocktails · #/cocktails/lieux · #/cocktail/12 · #/cocktail/12/preparer · #/mon-bar · #/a-traiter · #/reglages
+  // Six entrées : Au bar (ouverture, le geste répété), Cocktails, Mon bar, À traiter, Connexion, Réglages.
+  // Adresses : #/ · #/cocktails · #/cocktails/lieux · #/cocktails/conseils · #/cocktails/conseils/5 · #/cocktail/12 ·
+  // #/cocktail/12/preparer · #/mon-bar · #/a-traiter · #/connexion · #/reglages
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
   import Martini from '@lucide/svelte/icons/martini'
@@ -9,6 +10,7 @@
   import Wine from '@lucide/svelte/icons/wine'
   import Inbox from '@lucide/svelte/icons/inbox'
   import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal'
+  import Plug from '@lucide/svelte/icons/plug'
   import { api } from '$lib/api.js'
   import { etat, recharger } from '$lib/donnees.svelte.js'
   import Connexion from './pages/Connexion.svelte'
@@ -19,12 +21,14 @@
   import MonBar from './pages/MonBar.svelte'
   import ATraiter from './pages/ATraiter.svelte'
   import Reglages from './pages/Reglages.svelte'
+  import Services from './pages/Services.svelte'
 
   const onglets = [
     { page: 'au-bar', nom: 'Au bar', icone: Martini, lien: '#/' },
     { page: 'cocktails', nom: 'Cocktails', icone: BookOpen, lien: '#/cocktails' },
     { page: 'mon-bar', nom: 'Mon bar', icone: Wine, lien: '#/mon-bar' },
     { page: 'a-traiter', nom: 'À traiter', icone: Inbox, lien: '#/a-traiter' },
+    { page: 'connexion', nom: 'Connexion', icone: Plug, lien: '#/connexion' },
     { page: 'reglages', nom: 'Réglages', icone: SlidersHorizontal, lien: '#/reglages' },
   ]
 
@@ -38,7 +42,7 @@
       return { page: 'cocktails', fiche: Number(morceaux[1]), preparer: morceaux[2] === 'preparer' }
     }
     const page = onglets.some((o) => o.page === morceaux[0]) ? morceaux[0] : 'au-bar'
-    return { page, sous: morceaux[1] || '' }
+    return { page, sous: morceaux[1] || '', detail: /^\d+$/.test(morceaux[2] || '') ? Number(morceaux[2]) : null }
   }
 
   async function verifier() {
@@ -97,16 +101,18 @@
     <main
       class="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pt-[calc(1.25rem+env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pt-8 md:pb-12"
     >
-      {#key route.page + (route.fiche ?? '') + (route.sous ?? '')}
+      {#key route.page + (route.fiche ?? '') + (route.sous ?? '') + (route.detail ?? '')}
         <div in:fade={{ duration: 140 }}>
           {#if route.fiche}
             <Fiche id={route.fiche} {session} />
           {:else if route.page === 'cocktails'}
-            <Cocktails sous={route.sous} />
+            <Cocktails sous={route.sous} detail={route.detail} />
           {:else if route.page === 'mon-bar'}
             <MonBar />
           {:else if route.page === 'a-traiter'}
             <ATraiter {session} sous={route.sous} />
+          {:else if route.page === 'connexion'}
+            <Services />
           {:else if route.page === 'reglages'}
             <Reglages {session} {deconnecter} />
           {:else}

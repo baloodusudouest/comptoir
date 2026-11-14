@@ -194,7 +194,7 @@ def _question_ingredient(cnx, recette_id: int, inconnu: dict) -> None:
                     (recette_id, cle, json.dumps({"nom": inconnu["nom"], "texte": inconnu["texte"], "proposition": proposition}, ensure_ascii=False), maintenant()))
 
 
-def _lieux_recette(cnx, recette_id: int, titre: str, textes: str) -> None:
+def _lieux_recette(cnx, recette_id: int, titre: str, textes: str, rubrique_origine: str = "") -> None:
     lieux: Lieux = ETAT["lieux"]
     surs, ambigus = lieux.evoques(titre)
     for lieu in surs:
@@ -202,7 +202,7 @@ def _lieux_recette(cnx, recette_id: int, titre: str, textes: str) -> None:
     for lieu in ambigus:
         cnx.execute("INSERT INTO a_traiter (type, recette_id, donnees, cree_le) VALUES ('evoque', ?, ?, ?)",
                     (recette_id, json.dumps({"lieu": lieu, "chemin": lieux.chemin(lieu)}, ensure_ascii=False), maintenant()))
-    for nom in epub.origine_ecrite(textes):
+    for nom in epub.origine_ecrite(textes, rubrique_origine):
         mots = nom.split()
         # « Ritz de Paris » : le plus long groupe de mots qui soit un lieu connu
         groupes = [" ".join(mots[i:i + n]) for n in range(len(mots), 0, -1) for i in range(len(mots) - n + 1)]
@@ -250,25 +250,29 @@ async def importer(request: Request, nom: str = "livre.epub"):
                                (lu.titre, lu.auteur, fichier, empreinte, int(lu.a_reperes_page), maintenant())).lastrowid
         for i, r in enumerate(lu.recettes):
             etat = "valide" if r.confiance >= SEUIL_CONFIANCE else "a_verifier"
-            rid = cnx.execute("""INSERT INTO recette (livre_id, ordre, titre, page_debut, page_fin, chapeau, etapes, texte_original, confiance, etat)
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            rid = cnx.execute("""INSERT INTO recette (livre_id, ordre, titre, page_debut, page_fin, chapeau, etapes, texte_original, confiance, etat,
+                                                      infos, note)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                               (livre_id, i, r.titre, r.page_debut, r.page_fin, r.chapeau, json.dumps(r.etapes, ensure_ascii=False),
-                               r.texte_original, r.confiance, etat)).lastrowid
+                               r.texte_original, r.confiance, etat, json.dumps(r.infos, ensure_ascii=False), r.note)).lastrowid
             for inconnu in _ecrire_lignes(cnx, rid, r.lignes):
                 _question_ingredient(cnx, rid, inconnu)
             if etat == "a_verifier":
                 cnx.execute("INSERT INTO a_traiter (type, recette_id, donnees, cree_le) VALUES ('recette', ?, ?, ?)",
                             (rid, json.dumps({"raisons": r.raisons}, ensure_ascii=False), maintenant()))
-            _lieux_recette(cnx, rid, r.titre, " ".join([r.chapeau, *r.etapes]))
+            _lieux_recette(cnx, rid, r.titre, " ".join([r.chapeau, *r.etapes]), r.infos.get("Origine", ""))
             if r.image and r.image in lu.images:
                 photos.append((rid, r.image))
+        for i, c in enumerate(lu.conseils):
+            cnx.execute("INSERT INTO conseil (livre_id, ordre, titre, theme, page_debut, page_fin, contenu) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (livre_id, i, c.titre, c.theme, c.page_debut, c.page_fin, json.dumps(c.contenu, ensure_ascii=False)))
     for rid, image in photos:
         if epub.ecrire_photo(lu.images[image], cfg.data / "photos" / f"{rid}.webp"):
             B().ecrire("UPDATE recette SET photo = 1 WHERE id = ?", rid)
     a_verifier = sum(1 for r in lu.recettes if r.confiance < SEUIL_CONFIANCE)
-    B().noter("import", lu.titre, f"{len(lu.recettes)} recettes, dont {a_verifier} à vérifier"
+    B().noter("import", lu.titre, f"{len(lu.recettes)} recettes, dont {a_verifier} à vérifier, {len(lu.conseils)} conseils"
               + ("" if lu.a_reperes_page else " ; pas de repères de page"))
-    return {"id": livre_id, "titre": lu.titre, "recettes": len(lu.recettes), "a_verifier": a_verifier,
+    return {"id": livre_id, "titre": lu.titre, "recettes": len(lu.recettes), "a_verifier": a_verifier, "conseils": len(lu.conseils),
             "a_reperes_page": lu.a_reperes_page, "nom_fichier": nom}
 
 
@@ -320,7 +324,7 @@ def restaurer_livre(livre_id: int):
 
 def _resume(r: dict, lignes: list[dict], lieux_r: list[dict], favoris: set[int]) -> dict:
     return {"id": r["id"], "titre": r["titre"], "livre": r["livre"], "livre_id": r["livre_id"],
-            "pages": epub.texte_pages(r), "photo": bool(r["photo"]), "favori": r["id"] in favoris,
+            "pages": epub.texte_pages(r), "photo": bool(r["photo"]), "favori": r["id"] in favoris, "note": r["note"],
             "etat": r["etat"], "sans_alcool": _sans_alcool(lignes), "base": _base_alcool(lignes),
             "evoque": [x["lieu"] for x in lieux_r if x["sorte"] == "evoque"],
             "cree_a": [x["lieu"] for x in lieux_r if x["sorte"] == "cree_a"]}
@@ -365,6 +369,7 @@ def recette(recette_id: int):
             "photo": bool(r["photo"]), "chapeau": r["chapeau"], "etapes": json.loads(r["etapes"]), "lignes": sorties,
             "lieux": lieux_r, "favori": bool(B().un("SELECT 1 x FROM favori WHERE recette_id = ?", recette_id)),
             "etat": r["etat"], "source": r["source"], "texte_original": r["texte_original"],
+            "infos": [{"nom": k, "texte": v} for k, v in json.loads(r["infos"] or "{}").items()], "note": r["note"],
             "manque": len(manquants(bar, lignes)), "sans_alcool": _sans_alcool(lignes)}
 
 
@@ -673,14 +678,48 @@ def annuler(id_: int):
     return {"ok": True}
 
 
+# ================================================================ conseils du livre
+
+ORDRE_THEMES = ["Techniques", "Glace", "Verres", "Matériel", "Ingrédients", "Autres"]
+
+
+@app.get("/api/conseils")
+def conseils():
+    """Passages des livres qui ne sont pas des recettes, rangés par thème (sans leur texte, pour la liste)."""
+    liste = B().lire("""SELECT c.id, c.titre, c.theme, c.page_debut, c.page_fin, c.livre_id, l.titre livre, c.contenu
+                        FROM conseil c JOIN livre l ON l.id = c.livre_id WHERE l.supprime_le IS NULL ORDER BY l.titre, c.ordre""")
+    for c in liste:
+        contenu = json.loads(c.pop("contenu"))
+        premier = next((x["texte"] for x in contenu if x["sorte"] == "para"), "")
+        c["apercu"] = premier[:160] + ("…" if len(premier) > 160 else "")
+        c["pages"] = epub.texte_pages(c)
+    themes = sorted({c["theme"] for c in liste}, key=lambda t: ORDRE_THEMES.index(t) if t in ORDRE_THEMES else 99)
+    return {"conseils": liste, "themes": themes,
+            "livres": B().un("SELECT COUNT(*) n FROM livre WHERE supprime_le IS NULL")["n"]}
+
+
+@app.get("/api/conseils/{conseil_id}")
+def conseil(conseil_id: int):
+    c = B().un("""SELECT c.*, l.titre livre FROM conseil c JOIN livre l ON l.id = c.livre_id
+                  WHERE c.id = ? AND l.supprime_le IS NULL""", conseil_id)
+    if not c:
+        raise HTTPException(404, "Conseil introuvable.")
+    return {"id": c["id"], "titre": c["titre"], "theme": c["theme"], "livre": c["livre"], "livre_id": c["livre_id"],
+            "pages": epub.texte_pages(c), "contenu": json.loads(c["contenu"])}
+
+
 @app.get("/api/sources")
 def sources():
     cfg: Config = ETAT["cfg"]
     derniers = {s: B().lire("SELECT le, cible, statut FROM appel_externe WHERE service = ? ORDER BY id DESC LIMIT 5", s) for s in ("wikidata", "mistral")}
     return [
         {"id": "wikidata", "nom": "Wikidata", "actif": cfg.recherche_web, "role": "Lit le pays ou le lieu de création des cocktails (lecture seule, une fois par recette).",
+         "lit": "Le nom du cocktail et, s'il existe, son pays ou son lieu d'origine.",
+         "ecrit": "Rien chez Wikidata. Un lieu sûr est posé dans Comptoir ; un doute part dans À traiter.",
          "reglage": "COMPTOIR_RECHERCHE_WEB", "derniers": derniers["wikidata"]},
         {"id": "mistral", "nom": "Mistral", "actif": bool(cfg.mistral_cle), "role": "Relit une recette mal découpée, seulement sur ton clic ; rien n'est enregistré sans ta validation.",
+         "lit": "Le texte d'une seule recette, celle que tu lui envoies depuis À traiter.",
+         "ecrit": "Rien : sa proposition attend que tu la valides ou la corriges.",
          "reglage": "COMPTOIR_MISTRAL_CLE", "derniers": derniers["mistral"]},
     ]
 

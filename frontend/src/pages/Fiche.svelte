@@ -1,6 +1,7 @@
 <script>
   // Fiche d'un cocktail : le livre et la page du livre papier pour le retrouver sur l'étagère,
-  // les lieux, les ingrédients (ce qui manque en orange) recalculés pour N verres, la préparation.
+  // la note du livre, les lieux, les ingrédients (ce qui manque en orange) recalculés pour N verres, la préparation,
+  // le verre et la déco, puis ce que le livre en dit (avis, origine, variante, autre nom).
   import { onMount } from 'svelte'
   import ArrowLeft from '@lucide/svelte/icons/arrow-left'
   import Star from '@lucide/svelte/icons/star'
@@ -17,6 +18,10 @@
   let r = $state(null)
   let erreur = $state('')
   let verres = $state(1)
+  // Rubriques du livre : le service (verre, déco) près de la préparation, le reste (avis, origine, variante…) en dessous
+  const SERVICE = ['Verre', 'Déco']
+  let service = $derived((r?.infos ?? []).filter((i) => SERVICE.includes(i.nom)))
+  let livre = $derived((r?.infos ?? []).filter((i) => !SERVICE.includes(i.nom)))
   let edition = $state(false)
 
   const sources = { livre: 'd\'après le livre', wikidata: 'd\'après Wikidata', regle: 'd\'après le nom', main: 'choisi à la main' }
@@ -61,7 +66,12 @@
           <Star class={`size-5 ${r.favori ? 'fill-primary text-primary' : ''}`} aria-hidden="true" />
         </button>
       </div>
-      <p class="mt-3 text-muted-foreground">{r.livre}{#if r.pages}, <span class="text-foreground">{r.pages}</span>{/if}</p>
+      <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+        <span>{r.livre}{#if r.pages}, <span class="text-foreground">{r.pages}</span>{/if}</span>
+        {#if r.note}
+          <span class="tracking-[0.15em] text-primary" role="img" aria-label={`Note du livre : ${r.note} sur 5`}>{'★'.repeat(r.note)}<span class="text-muted-foreground/40">{'★'.repeat(Math.max(0, 5 - r.note))}</span></span>
+        {/if}
+      </p>
       {#if r.etat === 'a_verifier'}
         <p class="mt-3 rounded-xl border border-primary/50 px-4 py-2 text-sm" role="status">Découpage à vérifier : compare avec le livre, puis corrige ou valide dans « À traiter ».</p>
       {/if}
@@ -110,6 +120,23 @@
           <ol class="mt-3 grid list-decimal gap-2 pl-5 marker:text-muted-foreground">
             {#each r.etapes as e}<li class="max-w-prose pl-1">{e}</li>{/each}
           </ol>
+        </section>
+      {/if}
+
+      {#if service.length}
+        <dl class="mt-6 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[6rem_1fr]">
+          {#each service as i}<dt class="text-muted-foreground">{i.nom}</dt><dd class="first-letter:uppercase">{i.texte}</dd>{/each}
+        </dl>
+      {/if}
+
+      {#if livre.length}
+        <section aria-labelledby="titre-livre" class="mt-8">
+          <h2 id="titre-livre" class="text-lg font-medium">Dans le livre</h2>
+          <dl class="mt-3 grid gap-3">
+            {#each livre as i}
+              <div><dt class="text-sm text-muted-foreground">{i.nom}</dt><dd class="mt-0.5 max-w-prose first-letter:uppercase">{i.texte}</dd></div>
+            {/each}
+          </dl>
         </section>
       {/if}
 

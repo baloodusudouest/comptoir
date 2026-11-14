@@ -36,7 +36,19 @@ CREATE TABLE IF NOT EXISTS recette (
     confiance REAL NOT NULL DEFAULT 1,
     etat TEXT NOT NULL DEFAULT 'valide',   -- a_verifier, valide, ignore
     source TEXT NOT NULL DEFAULT 'regles', -- regles, mistral, main
-    modifie_le TEXT
+    modifie_le TEXT,
+    infos TEXT NOT NULL DEFAULT '{}',      -- JSON : rubriques du livre (Verre, Déco, Mon avis, Origine, Variante, Autre nom)
+    note INTEGER                           -- étoiles données par le livre (1 à 5)
+);
+CREATE TABLE IF NOT EXISTS conseil (       -- passages du livre qui ne sont pas des recettes (glace, verres, techniques…)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    livre_id INTEGER NOT NULL REFERENCES livre(id) ON DELETE CASCADE,
+    ordre INTEGER NOT NULL,
+    titre TEXT NOT NULL,
+    theme TEXT NOT NULL DEFAULT 'Autres',  -- Verres, Matériel, Techniques, Glace, Ingrédients, Autres
+    page_debut TEXT,
+    page_fin TEXT,
+    contenu TEXT NOT NULL DEFAULT '[]'     -- JSON : [{"sorte": para | li_ul | li_ol | sous_titre, "texte": …}]
 );
 CREATE TABLE IF NOT EXISTS ligne (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,7 +128,15 @@ CREATE TABLE IF NOT EXISTS cache_web (
 );
 CREATE INDEX IF NOT EXISTS recette_livre ON recette(livre_id);
 CREATE INDEX IF NOT EXISTS ligne_recette ON ligne(recette_id);
+CREATE INDEX IF NOT EXISTS conseil_livre ON conseil(livre_id);
 """
+
+# Colonnes ajoutées après la 0.1 : posées sur une base existante au démarrage (les livres déjà importés restent sans rubriques
+# ni conseils ; les réimporter après les avoir supprimés pour les avoir).
+MIGRATIONS = [
+    ("recette", "infos", "ALTER TABLE recette ADD COLUMN infos TEXT NOT NULL DEFAULT '{}'"),
+    ("recette", "note", "ALTER TABLE recette ADD COLUMN note INTEGER"),
+]
 
 
 def maintenant() -> str:
@@ -131,6 +151,11 @@ class Base:
         self._cnx.row_factory = sqlite3.Row
         self._cnx.execute("PRAGMA foreign_keys = ON")
         self._cnx.execute("PRAGMA journal_mode = WAL")
+        existantes = {r[0] for r in self._cnx.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        if "recette" in existantes:            # base d'une version précédente : colonnes d'abord, puis le reste du schéma
+            for table, colonne, sql in MIGRATIONS:
+                if colonne not in {r[1] for r in self._cnx.execute(f"PRAGMA table_info({table})")}:
+                    self._cnx.execute(sql)
         self._cnx.executescript(SCHEMA)
         self._cnx.commit()
 

@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 0.4.1 — 14 novembre 2026
+- Corrigé : un ingrédient était rattaché au mot connu le plus long contenu dans son nom, sans regarder ce qu'il était. « Liqueur de pomme » devenait du jus de pomme, « soda au gingembre » du gingembre, « crème de fraise » des fruits rouges, « sirop de marasquin » la liqueur. Désormais le premier mot (liqueur, crème, sirop, soda, jus, nectar, bitter, eau-de-vie…) dit la catégorie, et le rattachement doit y appartenir ; une marque reste acceptée (« liqueur Galliano »). Sur le livre d'essai, 233 lignes sont mieux rattachées.
+- Arbre des ingrédients : 233 nœuds. Nouveaux : liqueurs de pomme, de miel, d'ananas, de pamplemousse, de fruit de la passion, de whisky, de thé ; crèmes de fraise, de myrtille, de citron, de châtaigne, de prune, de figue, de noyaux ; cordial de citron vert, sirop de marasquin, sirop de cannelle ; soda au pamplemousse, bitter lemon.
+- Mon bar : une famille sans variante (Liqueur de banane) n'apparaît qu'une fois, sans son nom répété au-dessus.
+- Un livre déjà importé garde ses anciens rattachements : le redéposer et choisir « Réimporter à neuf ». 53 tests.
+
 ## 0.4.0 — 14 novembre 2026
 - **Verres ou litres** sur la fiche et en mode Préparer : un nombre de verres (1 à 50, au lieu de 8), ou un volume en litres (0,1 à 20 l, au quart de litre ou saisi) pour un pichet ou un punch. En litres, l'appli dit à combien de verres cela correspond (« ≈ 10 verres de 11 cl, avant la glace »). Le volume d'un verre est celui des ingrédients mesurés : un « compléter avec… » sans quantité ne compte pas.
 - Quantités : au-delà d'un litre, les cl passent en litres ; ce qui se compte (feuilles, zestes, œufs) s'arrondit au demi quand le facteur n'est pas entier.

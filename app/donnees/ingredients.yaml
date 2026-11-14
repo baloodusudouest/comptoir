@@ -115,7 +115,7 @@
       nom: Crème de cacao
       alias: [crème de cacao]
       variantes:
-        - {id: creme-de-cacao-blanche, nom: Crème de cacao blanche, alias: [crème de cacao blanche]}
+        - {id: creme-de-cacao-blanche, nom: Crème de cacao blanche, alias: [crème de cacao blanche, crème blanche de cacao, crème de cacao blanc]}
         - {id: creme-de-cacao-brune, nom: Crème de cacao brune, alias: [crème de cacao brune]}
     - id: creme-de-menthe
       nom: Crème de menthe
@@ -203,7 +203,7 @@
       alias: [liqueur de litchi, kwai feh]
     - id: liqueur-noisette
       nom: Liqueur de noisette
-      alias: [liqueur de noisette, frangelico]
+      alias: [liqueur de noisette, frangelico, crème de noisette, crème de noisettes]
     - id: liqueur-noix
       nom: Liqueur de noix
       alias: [liqueur de noix, nocello]
@@ -237,6 +237,40 @@
     - id: pimms
       nom: Pimm's
       alias: [pimm's, pimm's n° 1, pimm's no 1, pimm's n° 1 cup]
+    - id: liqueur-pomme
+      nom: Liqueur de pomme
+      alias: [liqueur de pomme, liqueur de pomme verte, schnapps de pomme, liqueur de pomme schnapps, liqueur de pomme sure, sour apple, apple schnapps, manzana]
+    - id: liqueur-miel
+      nom: Liqueur de miel
+      alias: [liqueur de miel, liqueur au miel, krupnik, bärenjäger, barenjager, liqueur au miel krupnik, liqueur de miel krupnik]
+    - id: liqueur-ananas
+      nom: Liqueur d'ananas
+      alias: [liqueur d'ananas, cordial d'ananas]
+    - id: liqueur-pamplemousse
+      nom: Liqueur de pamplemousse
+      alias: [liqueur de pamplemousse, liqueur de pamplemousse rose, liqueur de pamplemousse rosé]
+    - id: liqueur-passion
+      nom: Liqueur de fruit de la passion
+      alias: [liqueur de fruit de la passion, liqueur de passion, passoa, passoã, passoà]
+    - id: liqueur-whisky
+      nom: Liqueur de whisky
+      alias: [liqueur de whisky, drambuie, glayva]
+    - id: liqueur-the
+      nom: Liqueur de thé
+      alias: [liqueur de thé, liqueur de thé vert]
+    - id: cremes-de-fruits
+      nom: Crèmes de fruits
+      alias: [crème de fruits]
+      variantes:
+        - {id: creme-de-fraise, nom: Crème de fraise, alias: [crème de fraise, crème de fraise des bois]}
+        - {id: creme-de-myrtille, nom: Crème de myrtille, alias: [crème de myrtille]}
+        - {id: creme-de-citron, nom: Crème de citron, alias: [crème de citron]}
+        - {id: creme-de-chataigne, nom: Crème de châtaigne, alias: [crème de châtaigne, crème de marron]}
+        - {id: creme-de-prune, nom: Crème de prune, alias: [crème de prune]}
+        - {id: creme-de-figue, nom: Crème de figue, alias: [crème de figue]}
+    - id: creme-de-noyaux
+      nom: Crème de noyaux
+      alias: [crème de noyaux, crème de noyau, noyau de poissy]
 
 - id: vins
   nom: Vins & bulles
@@ -305,19 +339,19 @@
       alias: [sirop d'orgeat, orgeat]
     - id: grenadine
       nom: Grenadine
-      alias: [grenadine, sirop de grenadine, sirop de grenade]
+      alias: [grenadine, sirop de grenadine, sirop de grenade, jus de grenadine]
     - id: sirop-miel
       nom: Sirop de miel
       alias: [sirop de miel, miel]
     - id: sirop-agave
       nom: Sirop d'agave
-      alias: [sirop d'agave, agave]
+      alias: [sirop d'agave, agave, nectar d'agave]
     - id: sirop-erable
       nom: Sirop d'érable
       alias: [sirop d'érable]
     - id: sirop-gingembre
       nom: Sirop de gingembre
-      alias: [sirop de gingembre]
+      alias: [sirop de gingembre, sirop au gingembre]
     - id: sirop-vanille
       nom: Sirop de vanille
       alias: [sirop de vanille]
@@ -327,7 +361,7 @@
       variantes:
         - {id: sirop-framboise, nom: Sirop de framboise, alias: [sirop de framboise]}
         - {id: sirop-fraise, nom: Sirop de fraise, alias: [sirop de fraise]}
-        - {id: sirop-passion, nom: Sirop de fruit de la passion, alias: [sirop de fruit de la passion, sirop de passion]}
+        - {id: sirop-passion, nom: Sirop de fruit de la passion, alias: [sirop de fruit de la passion, sirop de passion, sirop au fruit de la passion]}
         - {id: sirop-menthe, nom: Sirop de menthe, alias: [sirop de menthe]}
         - {id: sirop-violette, nom: Sirop de violette, alias: [sirop de violette]}
         - {id: sirop-sureau, nom: Sirop de sureau, alias: [sirop de sureau, cordial de sureau]}
@@ -340,6 +374,15 @@
     - id: sirop-caramel
       nom: Sirop de caramel
       alias: [sirop de caramel, sirop de caramel salé]
+    - id: cordial-citron-vert
+      nom: Cordial de citron vert
+      alias: [cordial de citron vert, lime cordial, rose's lime cordial, liqueur rose's lime cordial, rose's lime]
+    - id: sirop-marasquin
+      nom: Sirop de marasquin (des cerises)
+      alias: [sirop de marasquin, sirop de cerises au marasquin, jus de cerises au marasquin]
+    - id: sirop-cannelle
+      nom: Sirop de cannelle
+      alias: [sirop de cannelle, sirop à la cannelle]
 
 - id: jus
   nom: Jus & fruits
@@ -391,7 +434,7 @@
       alias: [concombre]
     - id: lait-coco
       nom: Crème de coco
-      alias: [crème de coco, lait de coco, coco lopez, sirop de noix de coco, sirop de coco]
+      alias: [crème de coco, lait de coco, coco lopez, sirop de noix de coco, sirop de coco, crème de noix de coco, crème de coco lopez]
     - id: poire
       nom: Jus de poire
       alias: [jus de poire, poire, nectar de poire]
@@ -433,13 +476,19 @@
       alias: [ginger beer, bière de gingembre]
     - id: ginger-ale
       nom: Ginger ale
-      alias: [ginger ale, canada dry]
+      alias: [ginger ale, canada dry, soda au gingembre]
     - id: cola
       nom: Cola
       alias: [cola, coca-cola, coca]
     - id: limonade
       nom: Limonade
       alias: [limonade, sprite, 7up, soda citron]
+    - id: soda-pamplemousse
+      nom: Soda au pamplemousse
+      alias: [soda au pamplemousse, soda au pamplemousse rose, soda pamplemousse]
+    - id: bitter-lemon
+      nom: Bitter lemon
+      alias: [bitter lemon, bitter lemon tonic]
 
 - id: amers
   nom: Amers
@@ -471,7 +520,7 @@
     - id: creme
       nom: Crème
       frais: true
-      alias: [crème, crème liquide, crème fraîche liquide, crème entière, double-crème, double crème, crème double]
+      alias: [crème, crème liquide, crème fraîche liquide, crème entière, double-crème, double crème, crème double, crème fraîche, crème épaisse, crème légère, crème fouettée, crème chantilly]
     - id: lait
       nom: Lait
       frais: true
@@ -573,7 +622,7 @@
       alias: [rondelle d'orange, rondelle de citron, rondelle de citron vert, tranche d'orange, tranche de citron, tranche de citron vert, tranche d'ananas, quartier de citron, quartier de citron vert, quartier d'orange, demi-tranche d'orange]
     - id: celeri
       nom: Branche de céleri
-      alias: [branche de céleri, céleri]
+      alias: [branche de céleri, céleri, jus de céleri]
     - id: physalis
       nom: Physalis
       alias: [physalis]

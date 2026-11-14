@@ -41,6 +41,19 @@ class Noeud:
     enfants: list[str] = field(default_factory=list)
 
 
+# Premier mot d'un nom écrit dans un livre → catégories où l'ingrédient peut se trouver. En français, ce premier mot dit
+# ce qu'est le produit : « liqueur de pomme » est une liqueur, « soda au gingembre » un soda, « jus de pomme » un jus.
+TETES = {
+    "liqueur": {"liqueurs"}, "liqueurs": {"liqueurs"}, "creme": {"liqueurs"}, "cremes": {"liqueurs"},
+    "sirop": {"sirops"}, "sirops": {"sirops"}, "cordial": {"sirops", "liqueurs"},
+    "soda": {"sodas"}, "sodas": {"sodas"}, "limonade": {"sodas"},
+    "jus": {"jus"}, "nectar": {"jus"}, "puree": {"jus", "sirops"},
+    "bitter": {"amers"}, "bitters": {"amers"}, "amer": {"amers", "liqueurs"},
+    "eau-de-vie": {"spiritueux"}, "eaux-de-vie": {"spiritueux"},
+    "vin": {"vins"}, "vins": {"vins"}, "biere": {"vins", "sodas"},
+}
+
+
 class Arbre:
     def __init__(self, ajoutes: list[dict] | None = None, alias_base: list[dict] | None = None):
         self.noeuds: dict[str, Noeud] = {}
@@ -97,9 +110,18 @@ class Arbre:
             return None
         if n in self.alias:
             return self.alias[n]
+        tete = n.split()[0]
+        permises = TETES.get(tete)
         for a in self._par_longueur:
             if len(a) >= 3 and re.search(rf"(^|[ ']){re.escape(a)}($| )", n):
-                return self.alias[a]
+                trouve = self.alias[a]
+                # « liqueur de pomme » contient « pomme » (le jus) : refusé, car une liqueur n'est pas un jus.
+                # « liqueur Galliano » contient « galliano » (une liqueur) : accepté.
+                # Un nom connu qui commence par le même mot (« crème liquide », « sirop de sucre ») est accepté, mais pas ce
+                # mot seul : « crème » (la crème fraîche) ne doit pas prendre « crème de fraise ».
+                if permises and not (a.startswith(tete + " ") or a == n) and self.noeuds[trouve].categorie not in permises:
+                    continue
+                return trouve
         return None
 
     def proposer(self, nom: str) -> str | None:

@@ -120,6 +120,25 @@ def test_listes_par_ordre_alphabetique(client):
     assert titres == sorted(titres, key=cle_alpha)
 
 
+def test_le_premier_mot_dit_ce_qu_est_le_produit():
+    """« liqueur de pomme » contient « pomme » (le jus) : c'est une liqueur, pas un jus. Le premier mot (liqueur, sirop,
+    soda, crème, jus…) dit la catégorie ; un nom de marque reste accepté (« liqueur Galliano »)."""
+    from app.ingredients import Arbre, lire_ligne, rapprocher
+    a = Arbre()
+    attendu = {
+        "60 ml de liqueur de pomme": "liqueur-pomme", "30 ml de jus de pomme": "pomme",
+        "105 ml de soda au gingembre": "ginger-ale", "2 cl de crème de fraise": "creme-de-fraise",
+        "2 cl de crème fraîche": "creme", "2 cl de crème liquide": "creme", "1,5 cl de liqueur Galliano": "galliano",
+        "2 cl de nectar d'agave": "sirop-agave", "1 cl de sirop de marasquin": "sirop-marasquin",
+        "2 cl de crème de cassis": "creme-de-cassis", "1 trait de bitter Angostura": "angostura",
+        "3 cl de crème de noix de coco": "lait-coco",
+    }
+    for texte, id_ in attendu.items():
+        assert rapprocher(a, lire_ligne(texte)) == id_, texte
+    # Une liqueur inconnue n'est plus rattachée au fruit du même nom : elle part dans « Nouveaux ingrédients »
+    assert rapprocher(a, lire_ligne("2 cl de liqueur de camomille")) is None
+
+
 def test_base_de_la_version_0_1_mise_a_niveau(tmp_path):
     """Une base créée par la 0.1 (sans colonnes infos et note, sans table conseil) s'ouvre et reçoit ce qui manque."""
     import sqlite3

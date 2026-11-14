@@ -93,8 +93,11 @@
       <section aria-labelledby={`cat-${c.id}`} class="mb-6 break-inside-avoid rounded-2xl border bg-card p-5">
         <h2 id={`cat-${c.id}`} class="text-lg font-medium">{c.nom}</h2>
         {#each c.familles as f (f.id)}
-          <h3 class="mt-4 mb-1 text-sm text-muted-foreground">{f.nom}</h3>
-          <ul aria-label={f.nom}>
+          {#if f.ingredients.length > 1}
+            <h3 class="mt-4 mb-1 text-sm text-muted-foreground">{f.nom}</h3>
+          {/if}
+          <!-- Une famille sans variante (Liqueur de banane) : une seule case, sans le nom répété au-dessus -->
+          <ul aria-label={f.nom} class={f.ingredients.length > 1 ? '' : 'mt-1'}>
             {#each f.ingredients as i (i.id)}{@render caseIngredient(i, f.ingredients.length > 1)}{/each}
           </ul>
         {/each}

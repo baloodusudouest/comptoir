@@ -3,7 +3,7 @@
   // Six entrées : Au bar (ouverture, le geste répété), Cocktails, Mon bar, À traiter, Connexion, Réglages.
   // Adresses : #/ · #/cocktails · #/cocktails/lieux · #/cocktails/conseils · #/cocktails/conseils/5 · #/cocktail/12 ·
   // #/cocktail/12/preparer · #/mon-bar · #/a-traiter · #/connexion · #/reglages
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import { fade } from 'svelte/transition'
   import Martini from '@lucide/svelte/icons/martini'
   import BookOpen from '@lucide/svelte/icons/book-open'
@@ -45,6 +45,17 @@
     return { page, sous: morceaux[1] || '', detail: /^\d+$/.test(morceaux[2] || '') ? Number(morceaux[2]) : null }
   }
 
+  // Position dans la page, gardée par adresse : en revenant d'une fiche, la liste (ou les lieux) reprend où on était
+  const positions = new Map()
+  let adresse = location.hash
+  async function changerDePage() {
+    positions.set(adresse, window.scrollY)
+    adresse = location.hash
+    route = lireRoute()
+    await tick()
+    requestAnimationFrame(() => window.scrollTo(0, route.fiche ? 0 : positions.get(adresse) ?? 0))
+  }
+
   async function verifier() {
     try {
       session = await api.get('/api/session')
@@ -63,7 +74,7 @@
   onMount(verifier)
 </script>
 
-<svelte:window onhashchange={() => { route = lireRoute(); window.scrollTo(0, 0) }} oncomptoir-deconnecte={() => (connecte = false)} />
+<svelte:window onhashchange={changerDePage} oncomptoir-deconnecte={() => (connecte = false)} />
 
 {#if connecte === false}
   <Connexion onconnecte={verifier} />

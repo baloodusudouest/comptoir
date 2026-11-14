@@ -3,6 +3,7 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (14/11/2026)
+- **0.3.0** : carte zoomable (d3-zoom), retour qui garde le lieu choisi et la position (`vues` dans `donnees.svelte.js`, positions par adresse dans `App.svelte`), pastilles faisable / favori.
 - **0.2.3** : variantes entre parenthèses rattachées au nom, rubriques mises en titre, conseils jamais lus comme recettes, chiffres romains. Le conseil « ordre de préparation » de l'essai est vide dans l'EPUB lui-même (Scriptorium n'a gardé que les numéros de la liste).
 - **0.2.1** : la note en étoiles mise en titre par le livre ne remplace plus le nom (318 recettes touchées dans l'essai) ; corbeille : « Effacer maintenant », « Réimporter à neuf ». Un livre importé avant se relit ainsi : le redéposer et choisir « Réimporter à neuf » (0.2.2 : plus besoin de le supprimer d'abord).
 - **0.2.0** : réglé sur un vrai livre (2 978 recettes, deux colonnes) ; onglet **Conseils** dans Cocktails ; rubriques et étoiles du livre sur la fiche ; écran **Connexion** des services ; 43 tests.
@@ -42,6 +43,7 @@
 - **Conseils** : un passage sans recette est gardé s'il a 200 caractères de texte et au moins un paragraphe de 120 ; même titre ailleurs dans le livre → le plus complet ; une section à rubriques (« VERRE : ») est une recette mal lue, jamais un conseil. Un « Conseil du barman » démarre toujours son propre passage (sinon il est avalé par l'encadré précédent).
 - **Deux colonnes** : l'appariement quantités / noms ne se fait que si les deux nombres concordent ; sinon rien n'est recollé et la recette part dans À traiter.
 - **Faux titres** : un titre sans lettre n'est jamais un nom de recette (`sans_faux_titres`). La note sous un nom est une note ; seule, elle ouvre une recette « Sans nom » (À traiter), sinon deux recettes se fondent.
+- **Carte** : le zoom se lit après la fin de son animation (250 à 450 ms) ; un test qui le compare doit attendre.
 - Navigation à six entrées (plafond du socle) : les Conseils sont un onglet de Cocktails, pas une entrée de plus.
 
 ## Décisions tranchées

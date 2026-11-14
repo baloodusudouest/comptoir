@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 0.3.0 — 14 novembre 2026
+- **Carte du monde zoomable** : molette et glisser sur PC, pincer et glisser au doigt, double-clic, boutons + / − / Recentrer. Les noms des pays qui ont des cocktails apparaissent à partir du zoom ×2, ceux des villes à partir de ×4 ; choisir un lieu centre la carte sur lui. Traits et points gardent leur épaisseur.
+- **Retour** depuis un cocktail : Cocktails retrouve le lieu choisi, la carte ou la liste, « créé à / évoque », le zoom de la carte, les filtres de la liste et la position dans la page.
+- **Pastilles** sur les vignettes, lisibles sur les photos à fond blanc : coche verte = j'ai de quoi le faire ; étoile = favori.
+- 49 tests.
+
 ## 0.2.3 — 14 novembre 2026
 - La variante écrite entre parenthèses sous le nom (« (FORMULE CLASSIQUE) », « (RECETTE DIFFORD) », en titre ou en paragraphe) est rattachée au nom : « Blood & Sand (Formule classique) », « Blood & Sand (Recette Difford) ». Avant, elle devenait le nom ou deux variantes portaient le même.
 - Une rubrique mise en titre par le livre (« VERRE: martini ») reste une rubrique au lieu de devenir le nom d'une recette.

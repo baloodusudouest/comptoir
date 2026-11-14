@@ -12,6 +12,13 @@ export const etat = $state({
   charge: false,
 })
 
+// Ce que l'on regardait dans Cocktails (filtres, lieu choisi, carte ou liste, zoom de la carte) : gardé quand on ouvre
+// un cocktail puis qu'on revient (« Retour »), et jusqu'au rechargement de la page.
+export const vues = $state({
+  liste: { livre: '', base: '', quoi: 'tout', favoris: false },
+  lieux: { sorte: 'les-deux', carte: false, choisi: null, zoom: null },
+})
+
 export async function recharger() {
   const [d, t, l] = await Promise.all([api.get('/api/recettes'), api.get('/api/a-traiter'), api.get('/api/lieux')])
   etat.recettes = d.recettes

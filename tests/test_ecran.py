@@ -110,11 +110,43 @@ def test_par_lieu_et_carte(navigateur, adresse, taille):
     page.goto(adresse + "/#/cocktails/lieux")
     page.get_by_role("button", name="Mexique").click()
     page.locator("ul[aria-label='Recettes du lieu'] li").filter(has_text="Mexican Mule").wait_for()
+    # Ouvrir le cocktail puis Retour : le pays reste choisi et ses cocktails restent affichés
+    page.locator("ul[aria-label='Recettes du lieu'] a").filter(has_text="Mexican Mule").click()
+    page.get_by_role("link", name="Retour").click()
+    page.locator("ul[aria-label='Recettes du lieu'] li").filter(has_text="Mexican Mule").wait_for()
+    assert page.get_by_role("button", name="Mexique").get_attribute("aria-pressed") == "true"
     page.get_by_role("button", name="Carte").click()
-    carte = page.locator("svg[aria-label='Carte du monde des cocktails']")
+    carte = page.locator("svg[aria-label^='Carte du monde des cocktails']")
     carte.wait_for()
     assert carte.locator("path").count() > 100                                    # les pays sont dessinés, hors ligne
     assert carte.get_by_role("button", name="Mexique : 1").count() == 1           # le pays qui a un cocktail est cliquable
+    # La carte s'est centrée sur le pays choisi : zoomée, avec les noms des pays
+    page.locator("svg text").filter(has_text="Mexique").wait_for()
+    page.get_by_role("button", name="Recentrer la carte").click()
+    page.wait_for_function("document.querySelectorAll('svg text').length === 0")
+    page.get_by_role("button", name="Zoomer", exact=True).click()
+    page.get_by_role("button", name="Zoomer", exact=True).click()
+    page.locator("svg text").first.wait_for()
+    page.wait_for_timeout(600)                                                     # fin de l'animation du zoom
+    zoom = carte.locator("g").first.get_attribute("transform")
+    # Retour depuis une fiche avec la carte : carte toujours affichée, au même zoom
+    page.locator("ul[aria-label='Recettes du lieu'] a").first.click()
+    page.get_by_role("link", name="Retour").click()
+    carte.wait_for()
+    assert carte.locator("g").first.get_attribute("transform") == zoom
+    sans_debordement(page)
+    assert erreurs == []
+
+
+@pytest.mark.parametrize("taille", TAILLES)
+def test_pastilles_faisable_et_favori(navigateur, adresse, taille):
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    faisables = page.locator("ul[aria-label='Faisables maintenant'] li")
+    assert faisables.first.get_by_text("Faisable avec ton bar").count() == 1
+    page.goto(adresse + "/#/cocktails")
+    daiquiri = page.locator("li").filter(has_text="Daïquiri de la maison").first
+    daiquiri.get_by_text("Favori", exact=True).wait_for()                        # le favori de la démonstration
+    assert daiquiri.get_by_text("Faisable avec ton bar").count() == 1
     sans_debordement(page)
     assert erreurs == []
 

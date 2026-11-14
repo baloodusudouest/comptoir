@@ -5,17 +5,19 @@
   import Star from '@lucide/svelte/icons/star'
   import MapIcon from '@lucide/svelte/icons/map'
   import List from '@lucide/svelte/icons/list'
-  import { etat, nomsLieux } from '$lib/donnees.svelte.js'
+  import { etat, nomsLieux, vues } from '$lib/donnees.svelte.js'
   import CarteCocktail from '$lib/components/CarteCocktail.svelte'
   import CarteMonde from '$lib/components/CarteMonde.svelte'
 
   let { sous = '', detail = null } = $props()
 
   // ---------------------------------------------------------------- liste
-  let livre = $state('')
-  let base = $state('')
-  let quoi = $state('tout')        // tout, faisables, presque
-  let favoris = $state(false)
+  // Valeurs reprises de « vues » : le retour depuis une fiche retrouve les mêmes filtres
+  let livre = $state(vues.liste.livre)
+  let base = $state(vues.liste.base)
+  let quoi = $state(vues.liste.quoi)        // tout, faisables, presque
+  let favoris = $state(vues.liste.favoris)
+  $effect(() => { Object.assign(vues.liste, { livre, base, quoi, favoris }) })
   let livres = $derived([...new Map(etat.recettes.map((r) => [r.livre_id, r.livre])).entries()].sort((a, b) => a[1].localeCompare(b[1])))
   const numero = (p) => parseInt((p || '').replace(/^p\. /, ''), 10) || 0
   let liste = $derived(etat.recettes.filter((r) =>
@@ -24,9 +26,10 @@
     .sort((a, b) => (livre ? numero(a.pages) - numero(b.pages) : 0) || a.titre.localeCompare(b.titre)))
 
   // ---------------------------------------------------------------- par lieu
-  let sorte = $state('les-deux')   // cree_a, evoque, les-deux
-  let carte = $state(false)
-  let choisi = $state(null)
+  let sorte = $state(vues.lieux.sorte)   // cree_a, evoque, les-deux
+  let carte = $state(vues.lieux.carte)
+  let choisi = $state(vues.lieux.choisi)
+  $effect(() => { Object.assign(vues.lieux, { sorte, carte, choisi }) })
   const ids = (l) => sorte === 'cree_a' ? l.cree_a : sorte === 'evoque' ? l.evoque : [...new Set([...l.cree_a, ...l.evoque])]
   let lieux = $derived([...etat.lieux.values()])
   let arbre = $derived.by(() => {

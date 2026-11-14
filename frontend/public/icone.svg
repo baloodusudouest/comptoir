@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#151311"/><rect x="11" y="43" width="42" height="8" rx="2" fill="#6fc3cf"/><rect x="17" y="33" width="30" height="8" rx="2" fill="#6fc3cf" opacity=".72"/><rect x="24" y="14" width="16" height="17" rx="2.5" fill="#f2ece2"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#151311"/>
+  <!-- verre à cocktail -->
+  <path d="M17 18h30L32 35z" fill="none" stroke="#f2ece2" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M21.5 22.5h21" stroke="#f2ece2" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+  <path d="M32 35v12M24.5 48h15" stroke="#f2ece2" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- rondelle d'orange amer posée sur le bord -->
+  <circle cx="44" cy="17" r="7.2" fill="#e0884a"/>
+  <circle cx="44" cy="17" r="4.6" fill="none" stroke="#151311" stroke-width="1" opacity=".55"/>
+  <path d="M44 12.4v9.2M39.4 17h9.2M40.8 13.8l6.4 6.4M47.2 13.8l-6.4 6.4" stroke="#151311" stroke-width=".8" opacity=".45"/>
+</svg>

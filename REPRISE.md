@@ -3,6 +3,7 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (14/11/2026)
+- **0.1.1** : icône de Comptoir.
 - **0.1.0, temps 1 du dossier** (`docs/dossier.md`) : l'appli pour la maison.
   - import d'EPUB déposés dans Réglages (refus clair d'un livre protégé par DRM, d'un doublon ; un livre en corbeille se restaure au lieu de se réimporter) ;
   - découpage par règles (titre, lignes d'ingrédients, préparation, chapeau), indice de confiance, recettes douteuses dans À traiter ;

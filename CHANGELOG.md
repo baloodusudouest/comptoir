@@ -1,5 +1,8 @@
 # Journal des versions
 
+## 0.1.1 — 14 novembre 2026
+- Icône propre à Comptoir (verre à cocktail et rondelle d'orange amer), à la place de celle reprise du squelette.
+
 ## 0.1.0 — 14 novembre 2026 — temps 1 : l'appli pour la maison
 - Import d'EPUB, découpage par règles, page du livre papier (repères EPUB 3), photos.
 - Mon bar (familles avec précision, équivalences, produits frais), faisables, « il manque 1 ou 2 », bouteille qui débloque le plus, favoris.

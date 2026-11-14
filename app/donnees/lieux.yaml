@@ -1,0 +1,138 @@
+# Lieux connus de Comptoir : pays → région → ville. Embarqués : la carte et la recherche ne demandent rien à Internet.
+# iso : code numérique ISO 3166 du pays (sert à colorer la carte du monde).
+# formes : façons d'écrire le lieu dans un nom de cocktail (noms français et anglais, gentilés), comparées sans accents.
+# ambigu : la forme est aussi autre chose (un quartier, un vin, un alcool) : le lieu évoqué part dans « À traiter ».
+pays:
+  - {id: france, nom: France, iso: 250, lat: 46.6, lon: 2.4, formes: [france, français, française, french, francais]}
+  - {id: mexique, nom: Mexique, iso: 484, lat: 23.6, lon: -102.5, formes: [mexique, mexicain, mexicaine, mexican, mexico]}
+  - {id: cuba, nom: Cuba, iso: 192, lat: 21.5, lon: -79.5, formes: [cuba, cubain, cubaine, cuban]}
+  - {id: etats-unis, nom: États-Unis, iso: 840, lat: 39.8, lon: -98.6, formes: [états-unis, etats-unis, usa, américain, américaine, american, america, amérique, yankee]}
+  - {id: royaume-uni, nom: Royaume-Uni, iso: 826, lat: 54.0, lon: -2.5, formes: [royaume-uni, britannique, british, britain, uk]}
+  - {id: irlande, nom: Irlande, iso: 372, lat: 53.2, lon: -8.2, formes: [irlande, irlandais, irlandaise, irish, ireland]}
+  - {id: russie, nom: Russie, iso: 643, lat: 61.5, lon: 90.0, formes: [russie, russe, russian, russia]}
+  - {id: italie, nom: Italie, iso: 380, lat: 42.8, lon: 12.5, formes: [italie, italien, italienne, italian, italy]}
+  - {id: espagne, nom: Espagne, iso: 724, lat: 40.2, lon: -3.7, formes: [espagne, espagnol, espagnole, spanish, spain]}
+  - {id: portugal, nom: Portugal, iso: 620, lat: 39.6, lon: -8.0, formes: [portugal, portugais, portugaise, portuguese]}
+  - {id: allemagne, nom: Allemagne, iso: 276, lat: 51.1, lon: 10.4, formes: [allemagne, allemand, allemande, german, germany]}
+  - {id: pays-bas, nom: Pays-Bas, iso: 528, lat: 52.2, lon: 5.5, formes: [pays-bas, hollande, hollandais, néerlandais, dutch, holland]}
+  - {id: belgique, nom: Belgique, iso: 56, lat: 50.6, lon: 4.6, formes: [belgique, belge, belgian]}
+  - {id: suisse, nom: Suisse, iso: 756, lat: 46.8, lon: 8.2, formes: [suisse, swiss]}
+  - {id: autriche, nom: Autriche, iso: 40, lat: 47.6, lon: 14.1, formes: [autriche, autrichien, austrian]}
+  - {id: grece, nom: Grèce, iso: 300, lat: 39.1, lon: 22.0, formes: [grèce, grec, grecque, greek]}
+  - {id: suede, nom: Suède, iso: 752, lat: 62.0, lon: 15.0, formes: [suède, suédois, swedish]}
+  - {id: danemark, nom: Danemark, iso: 208, lat: 56.0, lon: 10.0, formes: [danemark, danois, danish]}
+  - {id: norvege, nom: Norvège, iso: 578, lat: 61.0, lon: 9.0, formes: [norvège, norvégien, norwegian]}
+  - {id: finlande, nom: Finlande, iso: 246, lat: 64.0, lon: 26.0, formes: [finlande, finlandais, finnish]}
+  - {id: pologne, nom: Pologne, iso: 616, lat: 52.0, lon: 19.4, formes: [pologne, polonais, polish]}
+  - {id: hongrie, nom: Hongrie, iso: 348, lat: 47.2, lon: 19.5, formes: [hongrie, hongrois, hungarian]}
+  - {id: turquie, nom: Turquie, iso: 792, lat: 39.0, lon: 35.2, formes: [turquie, turc, turque, turkish]}
+  - {id: bresil, nom: Brésil, iso: 76, lat: -10.0, lon: -52.0, formes: [brésil, brésilien, brésilienne, brazilian, brazil]}
+  - {id: perou, nom: Pérou, iso: 604, lat: -9.2, lon: -75.0, formes: [pérou, péruvien, péruvienne, peruvian, peru]}
+  - {id: chili, nom: Chili, iso: 152, lat: -35.7, lon: -71.5, formes: [chilien, chilienne, chilean]}
+  - {id: argentine, nom: Argentine, iso: 32, lat: -38.4, lon: -63.6, formes: [argentine, argentin, argentinian]}
+  - {id: colombie, nom: Colombie, iso: 170, lat: 4.6, lon: -74.3, formes: [colombie, colombien, colombian]}
+  - {id: venezuela, nom: Venezuela, iso: 862, lat: 7.0, lon: -66.0, formes: [venezuela, vénézuélien, venezuelan]}
+  - {id: panama, nom: Panama, iso: 591, lat: 8.5, lon: -80.8, formes: [panaméen]}
+  - {id: canada, nom: Canada, iso: 124, lat: 56.1, lon: -106.3, formes: [canada, canadien, canadienne, canadian]}
+  - {id: jamaique, nom: Jamaïque, iso: 388, lat: 18.1, lon: -77.3, formes: [jamaïque, jamaïcain, jamaican, jamaica]}
+  - {id: porto-rico, nom: Porto Rico, iso: 630, lat: 18.2, lon: -66.5, formes: [porto rico, portoricain, puerto rico, puerto rican]}
+  - {id: haiti, nom: Haïti, iso: 332, lat: 19.0, lon: -72.3, formes: [haïti, haïtien, haitian]}
+  - {id: republique-dominicaine, nom: République dominicaine, iso: 214, lat: 18.7, lon: -70.2, formes: [dominicain, dominican]}
+  - {id: barbade, nom: Barbade, iso: 52, lat: 13.2, lon: -59.5, formes: [barbade, barbados, bajan]}
+  - {id: trinite, nom: Trinité-et-Tobago, iso: 780, lat: 10.7, lon: -61.2, formes: [trinidad, trinité, trinidadien]}
+  - {id: bahamas, nom: Bahamas, iso: 44, lat: 25.0, lon: -77.4, formes: [bahamas, bahamien, bahama]}
+  - {id: japon, nom: Japon, iso: 392, lat: 36.2, lon: 138.3, formes: [japon, japonais, japonaise, japanese, japan, nippon]}
+  - {id: chine, nom: Chine, iso: 156, lat: 35.9, lon: 104.2, formes: [chine, chinois, chinoise, chinese, china]}
+  - {id: inde, nom: Inde, iso: 356, lat: 20.6, lon: 79.0, formes: [inde, indien, indienne, indian]}
+  - {id: thailande, nom: Thaïlande, iso: 764, lat: 15.9, lon: 100.9, formes: [thaïlande, thaï, thai, thailandais]}
+  - {id: philippines, nom: Philippines, iso: 608, lat: 12.9, lon: 121.8, formes: [philippines, philippin, filipino]}
+  - {id: singapour, nom: Singapour, iso: 702, lat: 1.35, lon: 103.8, formes: [singapour, singapore, singapourien]}
+  - {id: australie, nom: Australie, iso: 36, lat: -25.3, lon: 133.8, formes: [australie, australien, australian, aussie]}
+  - {id: nouvelle-zelande, nom: Nouvelle-Zélande, iso: 554, lat: -40.9, lon: 174.9, formes: [nouvelle-zélande, néo-zélandais, kiwi]}
+  - {id: maroc, nom: Maroc, iso: 504, lat: 31.8, lon: -7.1, formes: [maroc, marocain, marocaine, moroccan]}
+  - {id: egypte, nom: Égypte, iso: 818, lat: 26.8, lon: 30.8, formes: [égypte, égyptien, egyptian]}
+  - {id: afrique-du-sud, nom: Afrique du Sud, iso: 710, lat: -30.6, lon: 22.9, formes: [sud-africain, south african]}
+  - {id: monaco, nom: Monaco, iso: 492, lat: 43.74, lon: 7.42, formes: [monaco, monégasque, monte-carlo]}
+
+regions:
+  - {id: angleterre, nom: Angleterre, pays: royaume-uni, lat: 52.4, lon: -1.5, formes: [angleterre, anglais, anglaise, english, england]}
+  - {id: ecosse, nom: Écosse, pays: royaume-uni, lat: 56.5, lon: -4.2, formes: [écosse, écossais, écossaise, scottish, scotland, scotch]}
+  - {id: pays-de-galles, nom: Pays de Galles, pays: royaume-uni, lat: 52.1, lon: -3.8, formes: [gallois, welsh, wales]}
+  - {id: normandie, nom: Normandie, pays: france, lat: 49.2, lon: 0.4, formes: [normandie, normand, normande]}
+  - {id: bretagne, nom: Bretagne, pays: france, lat: 48.2, lon: -2.9, formes: [bretagne, breton, bretonne]}
+  - {id: provence, nom: Provence, pays: france, lat: 43.9, lon: 6.0, formes: [provence, provençal, provençale]}
+  - {id: alsace, nom: Alsace, pays: france, lat: 48.3, lon: 7.4, formes: [alsace, alsacien, alsacienne]}
+  - {id: bourgogne, nom: Bourgogne, pays: france, lat: 47.1, lon: 4.4, formes: [bourgogne, bourguignon]}
+  - {id: champagne-region, nom: Champagne, pays: france, lat: 49.0, lon: 4.0, formes: [champagne], ambigu: true}
+  - {id: gascogne, nom: Gascogne, pays: france, lat: 43.7, lon: 0.2, formes: [gascogne, gascon, gasconne]}
+  - {id: corse, nom: Corse, pays: france, lat: 42.0, lon: 9.0, formes: [corse]}
+  - {id: martinique, nom: Martinique, pays: france, lat: 14.6, lon: -61.0, formes: [martinique, martiniquais]}
+  - {id: guadeloupe, nom: Guadeloupe, pays: france, lat: 16.2, lon: -61.5, formes: [guadeloupe, guadeloupéen]}
+  - {id: tahiti, nom: Tahiti, pays: france, lat: -17.65, lon: -149.4, formes: [tahiti, tahitien, polynésien]}
+  - {id: toscane, nom: Toscane, pays: italie, lat: 43.4, lon: 11.0, formes: [toscane, toscan, tuscan]}
+  - {id: sicile, nom: Sicile, pays: italie, lat: 37.6, lon: 14.0, formes: [sicile, sicilien, sicilian]}
+  - {id: andalousie, nom: Andalousie, pays: espagne, lat: 37.4, lon: -4.6, formes: [andalousie, andalou, andalusian]}
+  - {id: californie, nom: Californie, pays: etats-unis, lat: 36.8, lon: -119.4, formes: [californie, californien, california, californian]}
+  - {id: floride, nom: Floride, pays: etats-unis, lat: 27.8, lon: -81.7, formes: [floride, florida]}
+  - {id: louisiane, nom: Louisiane, pays: etats-unis, lat: 30.9, lon: -92.0, formes: [louisiane, louisiana]}
+  - {id: kentucky, nom: Kentucky, pays: etats-unis, lat: 37.8, lon: -84.3, formes: [kentucky]}
+  - {id: texas, nom: Texas, pays: etats-unis, lat: 31.0, lon: -100.0, formes: [texas, texan]}
+  - {id: hawai, nom: Hawaï, pays: etats-unis, lat: 20.8, lon: -156.3, formes: [hawaï, hawaii, hawaiian, hawaïen]}
+  - {id: long-island, nom: Long Island, pays: etats-unis, lat: 40.8, lon: -73.1, formes: [long island], ambigu: true}
+  - {id: jalisco, nom: Jalisco, pays: mexique, lat: 20.7, lon: -103.3, formes: [jalisco]}
+
+villes:
+  - {id: paris, nom: Paris, pays: france, lat: 48.857, lon: 2.352, formes: [paris, parisien, parisienne, parisian]}
+  - {id: bordeaux, nom: Bordeaux, pays: france, lat: 44.84, lon: -0.58, formes: [bordelais]}
+  - {id: lyon, nom: Lyon, pays: france, lat: 45.76, lon: 4.84, formes: [lyon, lyonnais]}
+  - {id: marseille, nom: Marseille, pays: france, lat: 43.30, lon: 5.37, formes: [marseille, marseillais]}
+  - {id: nice, nom: Nice, pays: france, lat: 43.70, lon: 7.27, formes: [niçois, niçoise]}
+  - {id: cognac-ville, nom: Cognac, pays: france, lat: 45.70, lon: -0.33, formes: [], ambigu: true}
+  - {id: deauville, nom: Deauville, pays: france, lat: 49.36, lon: 0.07, formes: [deauville]}
+  - {id: biarritz, nom: Biarritz, pays: france, lat: 43.48, lon: -1.56, formes: [biarritz]}
+  - {id: londres, nom: Londres, pays: royaume-uni, region: angleterre, lat: 51.507, lon: -0.128, formes: [londres, london, londonien]}
+  - {id: edimbourg, nom: Édimbourg, pays: royaume-uni, region: ecosse, lat: 55.95, lon: -3.19, formes: [édimbourg, edinburgh]}
+  - {id: dublin, nom: Dublin, pays: irlande, lat: 53.35, lon: -6.26, formes: [dublin]}
+  - {id: new-york, nom: New York, pays: etats-unis, lat: 40.71, lon: -74.0, formes: [new york, new-york, new yorker, nyc]}
+  - {id: manhattan, nom: Manhattan, pays: etats-unis, ville: new-york, lat: 40.78, lon: -73.97, formes: [manhattan], ambigu: true}
+  - {id: bronx, nom: Bronx, pays: etats-unis, ville: new-york, lat: 40.84, lon: -73.86, formes: [bronx], ambigu: true}
+  - {id: brooklyn, nom: Brooklyn, pays: etats-unis, ville: new-york, lat: 40.68, lon: -73.94, formes: [brooklyn], ambigu: true}
+  - {id: nouvelle-orleans, nom: La Nouvelle-Orléans, pays: etats-unis, region: louisiane, lat: 29.95, lon: -90.07, formes: [nouvelle-orléans, new orleans, nola]}
+  - {id: san-francisco, nom: San Francisco, pays: etats-unis, region: californie, lat: 37.77, lon: -122.42, formes: [san francisco, frisco]}
+  - {id: martinez, nom: Martinez, pays: etats-unis, region: californie, lat: 38.02, lon: -122.13, formes: [martinez], ambigu: true}
+  - {id: los-angeles, nom: Los Angeles, pays: etats-unis, region: californie, lat: 34.05, lon: -118.24, formes: [los angeles, hollywood]}
+  - {id: chicago, nom: Chicago, pays: etats-unis, lat: 41.88, lon: -87.63, formes: [chicago]}
+  - {id: miami, nom: Miami, pays: etats-unis, region: floride, lat: 25.76, lon: -80.19, formes: [miami]}
+  - {id: la-havane, nom: La Havane, pays: cuba, lat: 23.13, lon: -82.38, formes: [la havane, havane, havana, habana, havanais]}
+  - {id: mexico-ville, nom: Mexico, pays: mexique, lat: 19.43, lon: -99.13, formes: [mexico city]}
+  - {id: acapulco, nom: Acapulco, pays: mexique, lat: 16.85, lon: -99.82, formes: [acapulco]}
+  - {id: tijuana, nom: Tijuana, pays: mexique, lat: 32.51, lon: -117.04, formes: [tijuana]}
+  - {id: moscou, nom: Moscou, pays: russie, lat: 55.75, lon: 37.62, formes: [moscou, moscow, moscovite]}
+  - {id: saint-petersbourg, nom: Saint-Pétersbourg, pays: russie, lat: 59.93, lon: 30.36, formes: [saint-pétersbourg, st petersburg]}
+  - {id: rome, nom: Rome, pays: italie, lat: 41.90, lon: 12.50, formes: [rome, romain, romaine, roman]}
+  - {id: venise, nom: Venise, pays: italie, lat: 45.44, lon: 12.33, formes: [venise, vénitien, vénitienne, venetian, venice]}
+  - {id: milan, nom: Milan, pays: italie, lat: 45.46, lon: 9.19, formes: [milan, milanais, milano]}
+  - {id: florence, nom: Florence, pays: italie, region: toscane, lat: 43.77, lon: 11.25, formes: [florentin, florentine]}
+  - {id: turin, nom: Turin, pays: italie, lat: 45.07, lon: 7.69, formes: [turin, torino]}
+  - {id: naples, nom: Naples, pays: italie, lat: 40.85, lon: 14.27, formes: [naples, napolitain]}
+  - {id: madrid, nom: Madrid, pays: espagne, lat: 40.42, lon: -3.70, formes: [madrid, madrilène]}
+  - {id: barcelone, nom: Barcelone, pays: espagne, lat: 41.39, lon: 2.17, formes: [barcelone, barcelona]}
+  - {id: lisbonne, nom: Lisbonne, pays: portugal, lat: 38.72, lon: -9.14, formes: [lisbonne, lisbon]}
+  - {id: porto-ville, nom: Porto, pays: portugal, lat: 41.15, lon: -8.61, formes: [], ambigu: true}
+  - {id: amsterdam, nom: Amsterdam, pays: pays-bas, lat: 52.37, lon: 4.90, formes: [amsterdam]}
+  - {id: berlin, nom: Berlin, pays: allemagne, lat: 52.52, lon: 13.40, formes: [berlin, berlinois]}
+  - {id: vienne, nom: Vienne, pays: autriche, lat: 48.21, lon: 16.37, formes: [viennois, viennoise, vienna, viennese]}
+  - {id: geneve, nom: Genève, pays: suisse, lat: 46.20, lon: 6.14, formes: [genève, genevois, geneva]}
+  - {id: rio, nom: Rio de Janeiro, pays: bresil, lat: -22.91, lon: -43.17, formes: [rio de janeiro, carioca]}
+  - {id: lima, nom: Lima, pays: perou, lat: -12.05, lon: -77.04, formes: [liménien]}
+  - {id: santiago, nom: Santiago, pays: chili, lat: -33.45, lon: -70.67, formes: [santiago]}
+  - {id: buenos-aires, nom: Buenos Aires, pays: argentine, lat: -34.60, lon: -58.38, formes: [buenos aires, porteño]}
+  - {id: kingston, nom: Kingston, pays: jamaique, lat: 17.97, lon: -76.79, formes: [kingston]}
+  - {id: san-juan, nom: San Juan, pays: porto-rico, lat: 18.47, lon: -66.11, formes: [san juan]}
+  - {id: tokyo, nom: Tokyo, pays: japon, lat: 35.68, lon: 139.69, formes: [tokyo, tokyoïte]}
+  - {id: hong-kong, nom: Hong Kong, pays: chine, lat: 22.32, lon: 114.17, formes: [hong kong]}
+  - {id: shanghai, nom: Shanghai, pays: chine, lat: 31.23, lon: 121.47, formes: [shanghai]}
+  - {id: bombay, nom: Bombay, pays: inde, lat: 19.08, lon: 72.88, formes: [bombay, mumbai]}
+  - {id: sydney, nom: Sydney, pays: australie, lat: -33.87, lon: 151.21, formes: [sydney]}
+  - {id: casablanca, nom: Casablanca, pays: maroc, lat: 33.57, lon: -7.59, formes: [casablanca]}
+  - {id: le-cap, nom: Le Cap, pays: afrique-du-sud, lat: -33.92, lon: 18.42, formes: [cape town]}

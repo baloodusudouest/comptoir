@@ -287,3 +287,12 @@ Reporté après le conseil. Exigences retenues pour la reprise :
 - **Mention visible** : liste indicative, risque de contamination croisée (shaker, sirops maison), demander aux hôtes au moindre doute.
 - **Test de bout en bout** obligatoire avant mise en ligne : chambre fictive allergique aux fruits à coque, amaretto au bar, le cocktail ne doit pas apparaître.
 - **À vérifier par les hôtes, hors de l'appli** : droit de montrer à des clients des recettes tirées de livres du commerce, et licence de débit de boissons. Ce n'est pas un avis juridique.
+
+---
+
+## Décisions prises en codant le temps 1 (14/11/2026)
+
+- **Écran allumé** : l'API Wake Lock du navigateur ne marche qu'en HTTPS. Le repli par une vidéo muette n'est pas fait : en http, le mode Préparer dit simplement que l'écran peut se mettre en veille. Pour la tablette du bar : une adresse HTTPS (Tailscale Serve).
+- **Pas de tri « Livres en cours d'import »** dans À traiter : l'import est assez rapide pour se faire pendant la demande ; la tuile n'a pas lieu d'être.
+- **Proposition de rattachement** d'un ingrédient inconnu : seulement si la ressemblance est forte (85 %), sinon on choisit soi-même.
+- **Données embarquées** : 164 ingrédients et 129 lieux au départ, à compléter avec le vrai livre.

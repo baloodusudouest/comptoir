@@ -9,6 +9,7 @@ Version publique : les valeurs réelles (adresses, noms, chemins) passent par le
 - Chaque recette montre la **page du livre papier** d'où elle vient (« p. 42 », ou « p. 42-43 » pour une recette sur deux pages), dans les listes et sur la fiche.
 - Elle est lue dans les **repères de page** de l'EPUB (EPUB 3, `epub:type="pagebreak"` et liste `page-list`). Les EPUB fabriqués par Scriptorium les portent depuis sa version 0.2.2.
 - Un EPUB sans repères (livre acheté en numérique, ou fabriqué avant) : aucune page affichée, et pas de saisie à la main.
+- **Supprimer un livre** supprime aussi tous ses cocktails, avec une **corbeille de 30 jours** (§ 2, « Supprimer un livre »).
 
 **Changements depuis la v0.1 (après le conseil)**
 - **Sonde avant le code** : un vrai livre EPUB sans DRM passe dans le découpeur en script brut. Le résultat décide des lieux.
@@ -83,6 +84,15 @@ Socle commun des applis maison : FastAPI (Python 3.12) + Svelte 5 + Tailwind 4, 
    - Le découpage traite le livre comme un seul flux : une recette peut commencer à la fin d'un fichier XHTML et finir dans le suivant, car Scriptorium fait un fichier par page.
    - Le repère visible que Scriptorium ajoute en tête de page (`<p class="page-originale">p. 42</p>`) est retiré avant le découpage, pour qu'il ne soit pris ni pour un ingrédient ni pour du texte.
 9. **Origine écrite dans le livre** : recherche dans le chapeau et la préparation de motifs du type « créé à… », « inventé par … au … bar de … », « né à … en 19.. ». Ce qui est trouvé devient un lieu « créé à » de source *livre*.
+
+### Supprimer un livre
+
+- Geste : Réglages › Livres › **Supprimer**, avec une confirmation qui annonce ce qui part (« 128 cocktails, dont 6 favoris et 14 corrections »).
+- Effet immédiat : le livre et **tous ses cocktails** disparaissent de partout (Au bar, listes, Par lieu, carte, compteurs, À traiter, tuile de l'Anneau). Avec eux : photos, lignes d'ingrédients, lieux rattachés, favoris, corrections et cas à traiter de ces recettes.
+- **Corbeille de 30 jours** : rien n'est effacé du disque pendant 30 jours. Réglages › Corbeille montre les livres supprimés avec la date d'effacement prévue ; **Restaurer** remet le livre et ses cocktails tels qu'ils étaient, favoris et corrections compris. Passé 30 jours, une tâche de nuit efface tout pour de bon (lignes en base, EPUB, photos).
+- **Ingrédients** : ce qui est coché dans Mon bar reste coché. Un ingrédient que plus aucun livre n'utilise est masqué de Mon bar, sans être supprimé ; il revient si un autre livre l'utilise. L'arbre des ingrédients, les alias et les équivalences ne bougent pas.
+- **Réimporter** le même EPUB pendant que le livre est dans la corbeille : l'appli propose de le restaurer plutôt que de repartir de zéro.
+- La suppression et la restauration sont inscrites au journal.
 
 ### Familles d'ingrédients (« avec précision »)
 
@@ -191,7 +201,8 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 - **Livres en cours d'import** → avancement, nombre de recettes lues et à vérifier.
 
 ### Réglages
-- **Livres** : déposer un EPUB, liste des livres (recettes, à vérifier), retirer un livre.
+- **Livres** : déposer un EPUB, liste des livres (recettes, à vérifier), **Supprimer** un livre et tous ses cocktails, avec confirmation.
+- **Corbeille** : livres supprimés depuis moins de 30 jours, date d'effacement prévue, **Restaurer**.
 - **Sources** : Wikidata/Wikipédia, Mistral : voyant, Vérifier, dernières demandes.
 - **Équivalences** d'ingrédients.
 - Journal des modifications avec Annuler (corrections, rattachements, lieux).
@@ -213,7 +224,7 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 ## 5. Schéma de données (SQLite, V1)
 
 ```
-livre(id, titre, auteur, fichier, empreinte, a_reperes_page, importe_le, etat)
+livre(id, titre, auteur, fichier, empreinte, a_reperes_page, importe_le, etat, supprime_le)   -- supprime_le rempli = dans la corbeille ; effacé 30 jours après
 recette(id, livre_id, titre, slug, page_debut, page_fin, chapeau, preparation_json, photo,
         confiance, etat[a_verifier|valide|ignore], source[regles|mistral|main], cree_le, modifie_le)
 ligne_ingredient(id, recette_id, ordre, texte_original, quantite, unite, ingredient_id, facultatif)
@@ -242,7 +253,7 @@ Le temps 2 ajoutera `bouteille`, `allergene_bouteille`, `correspondance_allergen
 1. Copie du socle : nom, couleur, mot de passe, `/health`, `REPRISE.md`, `CHANGELOG.md`.
 2. Import EPUB par règles + livre de test inventé + tests du découpage (dont une recette sur deux pages, avec repères de page à la Scriptorium, et un livre sans repères).
 3. Arbre des ingrédients, Mon bar, calcul faisables / il manque / bouteille qui débloque (tests du calcul).
-4. Fiche cocktail, favoris, nombre de verres.
+4. Fiche cocktail, favoris, nombre de verres ; suppression d'un livre avec corbeille de 30 jours (tests : tout disparaît des listes et des compteurs, restauration à l'identique, effacement définitif après 30 jours, bar inchangé).
 5. À traiter : recettes, ingrédients ; envoi à Mistral sur clic.
 6. Lieux : « évoque » par règles ; « créé à » si retenu ; liste emboîtée et carte embarquée.
 7. Mode Préparer, testé sur téléphone et PC.

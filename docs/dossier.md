@@ -1,9 +1,14 @@
 # Comptoir — dossier de conception
 
-Version 0.2 du dossier, 14/11/2026. Écrit après un grill (questions de cadrage), puis revu après un passage au conseil (cinq avis indépendants, relecture croisée, synthèse).
+Version 0.3 du dossier, 14/11/2026. Écrit après un grill (questions de cadrage), puis revu après un passage au conseil (cinq avis indépendants, relecture croisée, synthèse).
 Couleur : orange amer `#e0884a`.
 
 Version publique : les valeurs réelles (adresses, noms, chemins) passent par les variables de la stack, jamais par ce dépôt.
+
+**Changements de la v0.3 : page du livre papier**
+- Chaque recette montre la **page du livre papier** d'où elle vient (« p. 42 », ou « p. 42-43 » pour une recette sur deux pages), dans les listes et sur la fiche.
+- Elle est lue dans les **repères de page** de l'EPUB (EPUB 3, `epub:type="pagebreak"` et liste `page-list`). Les EPUB fabriqués par Scriptorium les portent depuis sa version 0.2.2.
+- Un EPUB sans repères (livre acheté en numérique, ou fabriqué avant) : aucune page affichée, et pas de saisie à la main.
 
 **Changements depuis la v0.1 (après le conseil)**
 - **Sonde avant le code** : un vrai livre EPUB sans DRM passe dans le découpeur en script brut. Le résultat décide des lieux.
@@ -18,7 +23,7 @@ Version publique : les valeurs réelles (adresses, noms, chemins) passent par le
 
 Le foyer a des livres de cocktails en EPUB, tous en français. Il veut :
 
-1. **Importer plusieurs livres**, en les déposant dans l'appli. Chaque recette garde son livre d'origine et sa photo quand le livre en a une.
+1. **Importer plusieurs livres**, en les déposant dans l'appli. Chaque recette garde son livre d'origine, sa photo quand le livre en a une, et **la page du livre papier** d'où elle vient, quand l'EPUB la porte.
 2. **Déclarer son bar** (ce qu'il y a à la maison) et voir :
    - les cocktails **faisables maintenant** ;
    - ceux auxquels **il manque 1 ou 2 ingrédients**, avec le nom de l'ingrédient qui manque ;
@@ -48,7 +53,8 @@ Fréquence : quelques livres importés une fois ; consultation fréquente, surto
 Avant tout code d'interface : un script lit un vrai EPUB (sans DRM : un livre protégé ne s'importe pas, l'appli le dira clairement) et relève :
 - le nombre de recettes trouvées, propres, et douteuses ;
 - les libellés d'ingrédients qui ne trouvent pas leur place dans l'arbre ;
-- pour les mêmes recettes, la part dont Wikidata ou Wikipédia en français donne l'origine.
+- pour les mêmes recettes, la part dont Wikidata ou Wikipédia en français donne l'origine ;
+- si l'EPUB porte les repères de page, et la page trouvée pour chaque recette (vérifiée sur quelques recettes avec le livre papier).
 
 Lecture des résultats :
 - plus de 30 % de recettes douteuses → les règles sont revues avant d'aller plus loin (l'appli ne doit pas devenir un outil de saisie) ;
@@ -69,7 +75,14 @@ Socle commun des applis maison : FastAPI (Python 3.12) + Svelte 5 + Tailwind 4, 
 5. **Indice de confiance** par recette : titre trouvé, au moins deux ingrédients lus, chaque ligne reconnue, préparation présente. Sous le seuil, la recette part dans **À traiter**.
 6. **Recettes douteuses** : correction à la main dans un éditeur, ou **envoi à Mistral sur clic** (`COMPTOIR_MISTRAL_CLE`). Mistral reçoit le texte brut de la recette seulement et rend un JSON (titre, ingrédients avec quantité/unité/nom, étapes, origine si écrite). Le résultat est montré à côté de l'original pour validation, jamais enregistré seul.
 7. **Photos** : l'image la plus proche du titre dans le XHTML (même chapitre, avant la recette suivante) est associée, recadrée en vignette WebP et gardée dans `/data/photos/`. Sans photo : vignette sobre à la couleur de l'appli.
-8. **Origine écrite dans le livre** : recherche dans le chapeau et la préparation de motifs du type « créé à… », « inventé par … au … bar de … », « né à … en 19.. ». Ce qui est trouvé devient un lieu « créé à » de source *livre*.
+8. **Page du livre papier** : l'appli lit les repères de page de l'EPUB 3 (`<span epub:type="pagebreak" title="42">`, ou `role="doc-pagebreak"`), dans l'ordre de lecture du livre (la *spine*), et la liste des pages (`nav epub:type="page-list"`) en secours.
+   - **Début** de la recette : le dernier repère avant son titre.
+   - **Fin** : le dernier repère avant la fin de sa préparation. Si la fin est sur une autre page que le début, la recette est notée « p. 42-43 ».
+   - Le numéro est gardé tel qu'il est écrit (texte), pour accepter « xii » ou « 42a ».
+   - Aucun repère dans le livre : pas de page, et rien ne l'invente (ni position dans l'EPUB, ni saisie).
+   - Le découpage traite le livre comme un seul flux : une recette peut commencer à la fin d'un fichier XHTML et finir dans le suivant, car Scriptorium fait un fichier par page.
+   - Le repère visible que Scriptorium ajoute en tête de page (`<p class="page-originale">p. 42</p>`) est retiré avant le découpage, pour qu'il ne soit pris ni pour un ingrédient ni pour du texte.
+9. **Origine écrite dans le livre** : recherche dans le chapeau et la préparation de motifs du type « créé à… », « inventé par … au … bar de … », « né à … en 19.. ». Ce qui est trouvé devient un lieu « créé à » de source *livre*.
 
 ### Familles d'ingrédients (« avec précision »)
 
@@ -142,17 +155,17 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 
 ### Au bar (ouverture)
 - En tête : nombre de cocktails faisables, recherche par nom.
-- Bandeau « Faisables maintenant » (vignettes photo, nom, lieu évoqué en petit), puis « Il te manque 1 ou 2 » avec l'ingrédient manquant en orange.
+- Bandeau « Faisables maintenant » (vignettes photo, nom, en petit le lieu évoqué et la page du livre papier, « p. 42 »), puis « Il te manque 1 ou 2 » avec l'ingrédient manquant en orange.
 - Encart « Une bouteille pour débloquer le plus » : 3 ingrédients, chacun « +12 cocktails ».
 - Filtres rapides en pastilles : Favoris, Sans alcool, spiritueux de base, Lieu.
 - Clic sur une vignette → **Fiche cocktail**.
 
 ### Cocktails
-- Liste de toutes les recettes, filtres : livre, spiritueux, faisable/il manque/tout, favoris.
+- Liste de toutes les recettes, filtres : livre, spiritueux, faisable/il manque/tout, favoris. Sous chaque nom : le livre et la page du livre papier (« Mon livre, p. 42-43 »), quand elle est connue.
 - Onglet **Par lieu** : liste emboîtée pays > région > ville avec compteurs, interrupteur « créé à / évoque / les deux » (seulement « évoque » si « créé à » n'est pas retenu) ; bouton **Carte** : carte du monde embarquée, un point par lieu avec son nombre ; clic sur un point → liste filtrée.
 
 ### Fiche cocktail
-- Photo, nom, livre et page, étoile Favori.
+- Photo, nom, étoile Favori ; le livre et la page du livre papier (« Mon livre, p. 42-43 »), pour retrouver la recette dans le livre sur l'étagère.
 - Lieux : « Créé à : La Havane, Cuba (livre) » ; « Évoque : Mexique (règle) ». Clic sur un lieu → liste de ce lieu.
 - Ingrédients avec quantités, ceux qui manquent en orange ; sélecteur du nombre de verres (1 à 8).
 - Préparation.
@@ -200,8 +213,8 @@ Le geste répété est « je veux un cocktail ce soir » : il ne passe pas derri
 ## 5. Schéma de données (SQLite, V1)
 
 ```
-livre(id, titre, auteur, fichier, empreinte, importe_le, etat)
-recette(id, livre_id, titre, slug, page_ref, chapeau, preparation_json, photo,
+livre(id, titre, auteur, fichier, empreinte, a_reperes_page, importe_le, etat)
+recette(id, livre_id, titre, slug, page_debut, page_fin, chapeau, preparation_json, photo,
         confiance, etat[a_verifier|valide|ignore], source[regles|mistral|main], cree_le, modifie_le)
 ligne_ingredient(id, recette_id, ordre, texte_original, quantite, unite, ingredient_id, facultatif)
 ingredient(id, nom, parent_id, niveau[categorie|famille|variante], toujours_la, frais, sans_alcool)
@@ -227,7 +240,7 @@ Le temps 2 ajoutera `bouteille`, `allergene_bouteille`, `correspondance_allergen
 
 0. **Sonde** sur un vrai livre (script brut), décision sur « créé à ».
 1. Copie du socle : nom, couleur, mot de passe, `/health`, `REPRISE.md`, `CHANGELOG.md`.
-2. Import EPUB par règles + livre de test inventé + tests du découpage.
+2. Import EPUB par règles + livre de test inventé + tests du découpage (dont une recette sur deux pages, avec repères de page à la Scriptorium, et un livre sans repères).
 3. Arbre des ingrédients, Mon bar, calcul faisables / il manque / bouteille qui débloque (tests du calcul).
 4. Fiche cocktail, favoris, nombre de verres.
 5. À traiter : recettes, ingrédients ; envoi à Mistral sur clic.

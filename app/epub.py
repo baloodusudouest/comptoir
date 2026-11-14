@@ -410,8 +410,55 @@ def decouper(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool]:
     return recettes, a_reperes
 
 
+SANS_NOM = "Sans nom"
+
+
+def _nom_au_dessus(sortie: list[Bloc]) -> int | None:
+    """Le nom d'une recette au-dessus de sa note : un titre, ou un court paragraphe en capitales. Entre les deux, on
+    passe les repères de page, les images et un seul petit paragraphe (« O-E » du scan, « (RECETTE … [1939]) »)."""
+    petits = 0
+    for i in range(len(sortie) - 1, max(-1, len(sortie) - 8), -1):
+        x = sortie[i]
+        if x.sorte in ("page", "image"):
+            continue
+        if x.sorte == "titre":
+            return i
+        texte = x.texte.strip()
+        lettres = [c for c in texte if c.isalpha()]
+        if x.sorte == "para" and 3 <= len(lettres) and len(texte) <= 60 and all(c.isupper() for c in lettres) \
+                and not rubrique(texte) and not texte.startswith("("):
+            return i
+        if x.sorte == "para" and len(texte) <= 40 and petits == 0:
+            petits += 1
+            continue
+        return None
+    return None
+
+
+def sans_faux_titres(blocs: list[Bloc]) -> list[Bloc]:
+    """Certains livres mettent sous le nom du cocktail des titres sans lettre : la note (« ★★★★☆ ») et un « 0 ».
+    Pris pour des titres, ils remplaçaient le nom de la recette.
+    - la note juste sous un nom (seuls des repères de page entre les deux) redevient un paragraphe, lu comme note ;
+    - une note sans nom au-dessus marque quand même le début d'une recette (sinon elle se fondrait dans la précédente) :
+      elle devient un titre « Sans nom », et la recette part dans À traiter ;
+    - les autres titres sans lettre (« 0 ») sont écartés."""
+    sortie: list[Bloc] = []
+    for b in blocs:
+        if b.sorte == "titre" and not any(c.isalpha() for c in b.texte):
+            if NOTE.match(b.texte.strip()):
+                nom = _nom_au_dessus(sortie)
+                if nom is None:
+                    sortie.append(Bloc("titre", SANS_NOM, niveau=b.niveau))
+                elif sortie[nom].sorte != "titre":       # « JUNGLE JUICE » écrit comme un paragraphe : c'est le nom
+                    sortie[nom] = Bloc("titre", sortie[nom].texte, niveau=b.niveau)
+                sortie.append(Bloc("para", b.texte.strip()))
+            continue
+        sortie.append(b)
+    return sortie
+
+
 def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bool, list[ConseilLu]]:
-    blocs = recoller(blocs)
+    blocs = recoller(sans_faux_titres(blocs))
     a_reperes = any(b.sorte == "page" for b in blocs)
     page = None
     pages_avant: list[str | None] = []      # page courante avant chaque bloc
@@ -465,7 +512,8 @@ def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bo
             elif NOTE.match(b.texte):
                 note = b.texte.count("★") or b.texte.count("*") or None
                 rangees.add(j)
-        libre = lambda j, b: b.sorte in ("para", "li_ul", "li_ol") and j not in rangees and not ETIQUETTES.match(b.texte)   # noqa: E731
+        libre = lambda j, b: (b.sorte in ("para", "li_ul", "li_ol") and j not in rangees and not ETIQUETTES.match(b.texte)   # noqa: E731
+                              and sum(c.isalpha() for c in b.texte) >= 3)      # « O-E » : parasite du scan
         chapeau = [b.texte for j, b in enumerate(section[:premier]) if libre(j, b)]
         lignes = [section[j].texte for j in idx_ing]
         if "Méthode" in infos:
@@ -483,6 +531,11 @@ def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bo
         if not images and debut > 0 and blocs[debut - 1].sorte == "image":
             images = [blocs[debut - 1].source]
         raisons, confiance = [], 1.0
+        titre = titre_propre(blocs[debut].texte)
+        if titre == SANS_NOM:
+            titre = f"{SANS_NOM}, p. {page_debut}" if page_debut else SANS_NOM
+            confiance -= 0.5
+            raisons.append("pas de nom dans le livre")
         if len(lignes) < 2:
             confiance -= 0.4
             raisons.append("une seule ligne d'ingrédient lue")
@@ -495,7 +548,7 @@ def decouper_tout(blocs: list[Bloc], arbre: Arbre) -> tuple[list[RecetteLue], bo
             raisons.append(f"{len(illisibles)} ligne(s) d'ingrédient sans quantité ni ingrédient reconnu")
         original = "\n".join([blocs[debut].texte, *[b.texte for b in section if b.sorte != "page" and b.texte]])
         recettes.append(RecetteLue(
-            titre=titre_propre(blocs[debut].texte), lignes=lignes, etapes=etapes, chapeau=" ".join(chapeau).strip(),
+            titre=titre, lignes=lignes, etapes=etapes, chapeau=" ".join(chapeau).strip(),
             page_debut=page_debut, page_fin=page_fin if page_fin != page_debut else None,
             image=images[0] if images else None, texte_original=original, confiance=round(max(confiance, 0), 2),
             raisons=raisons, infos=infos, note=note))

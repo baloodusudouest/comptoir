@@ -93,17 +93,21 @@ class Travail:
         return True
 
     # ------------------------------------------------------------ corbeille
+    def effacer(self, l: dict, raison: str) -> None:
+        """Efface pour de bon un livre de la corbeille : lignes en base (recettes, conseils, favoris, lieux en cascade),
+        EPUB déposé et photos."""
+        photos = self.base.lire("SELECT id FROM recette WHERE livre_id = ? AND photo = 1", l["id"])
+        self.base.ecrire("DELETE FROM livre WHERE id = ?", l["id"])
+        for p in photos:
+            (self.cfg.data / "photos" / f"{p['id']}.webp").unlink(missing_ok=True)
+        (self.cfg.data / "livres" / l["fichier"]).unlink(missing_ok=True)
+        self.base.noter("effacement", l["titre"], raison)
+
     def purger(self) -> int:
         limite = (datetime.now().astimezone() - timedelta(days=self.cfg.corbeille_jours)).isoformat(timespec="seconds")
         vieux = self.base.lire("SELECT id, fichier, titre FROM livre WHERE supprime_le IS NOT NULL AND supprime_le < ?", limite)
         for l in vieux:
-            photos = self.base.lire("SELECT id FROM recette WHERE livre_id = ? AND photo = 1", l["id"])
-            self.base.ecrire("DELETE FROM livre WHERE id = ?", l["id"])     # recettes, lignes, favoris, lieux : en cascade
-            for p in photos:
-                (self.cfg.data / "photos" / f"{p['id']}.webp").unlink(missing_ok=True)
-            fichier = self.cfg.data / "livres" / l["fichier"]
-            fichier.unlink(missing_ok=True)
-            self.base.noter("effacement", l["titre"], "corbeille vidée après 30 jours")
+            self.effacer(l, "corbeille vidée après 30 jours")
         if vieux:
             shutil.rmtree(self.cfg.data / "tmp", ignore_errors=True)
         return len(vieux)

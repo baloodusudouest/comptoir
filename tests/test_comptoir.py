@@ -21,7 +21,7 @@ def test_livre_en_deux_colonnes_rubriques_et_etoiles(client):
     """Quantités puis noms en colonnes (« 30 ml », « 15 ml »… puis « de rhum ambré »…), rubriques VERRE / DÉCO / MON AVIS /
     ORIGINE, note en étoiles : tout est rangé, et la parenthèse de l'origine donne le lieu de création."""
     r = importer(client, livre_deux_colonnes()).json()
-    assert r["recettes"] == 2 and r["a_verifier"] == 0 and r["conseils"] == 1
+    assert r["recettes"] == 5 and r["a_verifier"] == 1 and r["conseils"] == 1
     recettes = par_titre(client)
     assert recettes["Triangle du Port"]["note"] == 4
     fiche = client.get(f"/api/recettes/{recettes['Triangle du Port']['id']}").json()
@@ -32,6 +32,22 @@ def test_livre_en_deux_colonnes_rubriques_et_etoiles(client):
     assert "VERRE" not in fiche["chapeau"] and "★" not in fiche["chapeau"]
     assert any(l["lieu"] == "bordeaux" and l["sorte"] == "cree_a" for l in fiche["lieux"])
     assert fiche["pages"] == "p. 30"
+
+
+def test_note_ecrite_comme_un_titre(client):
+    """La note (« ★★★★☆ ») et un « 0 » mis en titres sous le nom ne remplacent plus le nom ; un nom écrit en paragraphe
+    est repris ; une note sans nom au-dessus donne une recette « Sans nom » envoyée dans À traiter, pas fondue dans la précédente."""
+    importer(client, livre_deux_colonnes())
+    recettes = par_titre(client)
+    assert not any(not any(c.isalpha() for c in t) for t in recettes)          # aucun titre fait d'étoiles
+    assert recettes["Rose du Môle"]["note"] == 4
+    assert recettes["Brise du Large"]["note"] == 5
+    brise = client.get(f"/api/recettes/{recettes['Brise du Large']['id']}").json()
+    assert brise["chapeau"] == "" and len(brise["lignes"]) == 2                 # « O-E » du scan écarté
+    sans_nom = recettes["Sans nom, p. 33"]
+    assert sans_nom["note"] == 2 and sans_nom["etat"] == "a_verifier"
+    a_traiter = client.get("/api/a-traiter").json()["elements"]
+    assert any(e["recette_id"] == sans_nom["id"] and "pas de nom dans le livre" in str(e["donnees"]) for e in a_traiter)
 
 
 def test_conseils_du_livre(client):
@@ -54,6 +70,22 @@ def test_conseils_du_livre(client):
     assert client.get(f"/api/conseils/{c['id']}").status_code == 404
     client.post(f"/api/livres/{livre_id}/restaurer")
     assert len(client.get("/api/conseils").json()["conseils"]) == 1
+
+
+def test_effacer_maintenant_puis_reimporter_a_neuf(client):
+    """Un livre en corbeille s'efface tout de suite (fichier, photos, recettes, conseils), puis le même EPUB
+    se réimporte comme un livre neuf : c'est ainsi qu'on profite d'un découpage amélioré."""
+    livre = importer(client, livre_scriptorium()).json()
+    assert client.delete(f"/api/corbeille/{livre['id']}").status_code == 404      # pas encore dans la corbeille
+    client.delete(f"/api/livres/{livre['id']}")
+    assert importer(client, livre_scriptorium()).status_code == 409                # proposé à la restauration
+    assert client.delete(f"/api/corbeille/{livre['id']}").json()["ok"]
+    assert client.get("/api/corbeille").json() == []
+    data = main.ETAT["cfg"].data
+    assert list((data / "livres").glob("*.epub")) == [] and list((data / "photos").glob("*.webp")) == []
+    neuf = importer(client, livre_scriptorium())
+    assert neuf.status_code == 200 and neuf.json()["recettes"] == 6
+    assert any(j["action"] == "effacement" for j in client.get("/api/journal").json())
 
 
 def test_base_de_la_version_0_1_mise_a_niveau(tmp_path):

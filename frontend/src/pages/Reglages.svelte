@@ -21,6 +21,7 @@
   let envoi = $state(false)
   let aSupprimer = $state(null)     // aperçu de la suppression en attente de confirmation
   let aRestaurer = $state(null)     // livre en corbeille proposé à la place d'un nouvel import
+  let dernierFichier = null        // le fichier déposé, pour « Réimporter à neuf »
   let eqA = $state('')
   let eqB = $state('')
 
@@ -36,6 +37,10 @@
     const fichier = e.currentTarget.files?.[0]
     e.currentTarget.value = ''
     if (!fichier) return
+    await importer(fichier)
+  }
+  async function importer(fichier) {
+    dernierFichier = fichier
     envoi = true
     message = erreur = ''
     aRestaurer = null
@@ -60,6 +65,17 @@
     message = `« ${aSupprimer.titre} » est dans la corbeille pour ${aSupprimer.jours} jours.`
     aSupprimer = null
     await Promise.all([charger(), recharger()])
+  }
+  async function effacer(c) {
+    await api.del(`/api/corbeille/${c.id}`)
+    message = `« ${c.titre ?? 'Le livre'} » est effacé pour de bon. Tu peux le déposer à nouveau.`
+    await charger()
+  }
+  async function reimporterANeuf() {
+    // Efface l'ancienne lecture (corbeille), puis relit le même fichier avec le découpage de cette version
+    await api.del(`/api/corbeille/${aRestaurer.id}`)
+    aRestaurer = null
+    await importer(dernierFichier)
   }
   async function restaurer(id) {
     await api.post(`/api/livres/${id}/restaurer`)
@@ -102,7 +118,13 @@
     </div>
     {#if message}<p class="mt-3 text-sm" role="status">{message}</p>{/if}
     {#if erreur}<p class="mt-3 text-sm text-destructive" role="alert">{erreur}</p>{/if}
-    {#if aRestaurer}<Button class="mt-2" variant="outline" onclick={() => restaurer(aRestaurer.id)}><RotateCcw class="size-4" /> Restaurer depuis la corbeille</Button>{/if}
+    {#if aRestaurer}
+      <div class="mt-2 flex flex-wrap gap-2">
+        <Button variant="outline" onclick={() => restaurer(aRestaurer.id)}><RotateCcw class="size-4" /> Restaurer tel quel</Button>
+        <Button variant="outline" onclick={reimporterANeuf}><Upload class="size-4" /> Réimporter à neuf</Button>
+      </div>
+      <p class="mt-2 text-sm text-muted-foreground">« Réimporter à neuf » relit le livre avec le découpage de cette version ; ses favoris et corrections sont perdus.</p>
+    {/if}
     {#if !livres.length}
       <p class="mt-3 text-sm text-muted-foreground">Aucun livre. Les EPUB fabriqués par Scriptorium portent les pages du livre papier ; un EPUB protégé par DRM ne peut pas être lu.</p>
     {:else}
@@ -141,7 +163,10 @@
           <li class="flex items-center justify-between gap-3 py-3">
             <span class="min-w-0"><span class="block font-medium">{c.titre}</span>
               <span class="text-sm text-muted-foreground">{c.recettes} recettes, effacé pour de bon le {date(c.efface_le)}</span></span>
-            <Button variant="outline" size="sm" onclick={() => restaurer(c.id)}><RotateCcw class="size-4" /> Restaurer</Button>
+            <span class="flex shrink-0 gap-1">
+              <Button variant="outline" size="sm" onclick={() => restaurer(c.id)}><RotateCcw class="size-4" /> Restaurer</Button>
+              <Button variant="ghost" size="sm" onclick={() => effacer(c)} aria-label={`Effacer ${c.titre} maintenant`}><X class="size-4" /> Effacer maintenant</Button>
+            </span>
           </li>
         {/each}
       </ul>

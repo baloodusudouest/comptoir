@@ -310,6 +310,16 @@ def corbeille():
     return res
 
 
+@app.delete("/api/corbeille/{livre_id}")
+def effacer_livre(livre_id: int):
+    """Efface tout de suite un livre de la corbeille (pour le réimporter à neuf après une nouvelle version du découpage)."""
+    l = B().un("SELECT id, titre, fichier FROM livre WHERE id = ? AND supprime_le IS NOT NULL", livre_id)
+    if not l:
+        raise HTTPException(404, "Ce livre n'est pas dans la corbeille.")
+    ETAT["travail"].effacer(l, "effacé à la main depuis la corbeille")
+    return {"ok": True}
+
+
 @app.post("/api/livres/{livre_id}/restaurer")
 def restaurer_livre(livre_id: int):
     l = B().un("SELECT id, titre FROM livre WHERE id = ? AND supprime_le IS NOT NULL", livre_id)

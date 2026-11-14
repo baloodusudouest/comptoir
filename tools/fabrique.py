@@ -109,10 +109,17 @@ def livre_deux_colonnes() -> bytes:
              "<p>Pour un verre servi sur glace, un gros glaçon fond plus lentement que plusieurs petits.</p>"),
         (32, legende + "<h1>VERT DES QUAIS</h1><ul><li>45 ml</li><li>15 ml</li></ul><p>de gin</p><p>de sirop de sucre</p>"
              "<p>MÉTHODE : REMUER avec de la glace et filtrer.</p><p>VERRE : coupe</p><p>★★★☆☆</p>"),
+        # Note et « 0 » écrits comme des titres sous le nom ; nom en paragraphe ; note sans aucun nom au-dessus
+        (33, "<h2>ROSE DU MÔLE</h2><h3>0</h3><h3>★★★★☆</h3><p>VERRE : coupe</p>"
+             "<ul><li>40 ml de gin</li><li>20 ml de jus de citron</li></ul><p>MÉTHODE : FRAPPER avec de la glace et filtrer.</p>"
+             "<p>BRISE DU LARGE</p><p>O-E</p><h3>★★★★★</h3><ul><li>50 ml de rhum blanc</li><li>20 ml de jus de citron vert</li></ul>"
+             "<p>MÉTHODE : FRAPPER avec de la glace et filtrer.</p>"
+             "<p><img src=\"images/vague.jpg\" alt=\"\"/></p><p>Une phrase de fin de page qui n'est pas un nom de cocktail, bien plus longue.</p>"
+             "<h3>★★☆☆☆</h3><ul><li>30 ml de vodka</li><li>90 ml de jus de cranberry</li></ul><p>MÉTHODE : VERSER sur la glace.</p>"),
     ]
     fichiers = [(f"p{i + 1:04d}.xhtml", _page(n, corps)) for i, (n, corps) in enumerate(pages)]
     liste = [(f"p{i + 1:04d}.xhtml#page-{n}", str(n)) for i, (n, _) in enumerate(pages)]
-    return _epub("Bible du port", "Auteur Inventé", fichiers, {}, liste)
+    return _epub("Bible du port", "Auteur Inventé", fichiers, {"vague.jpg": _image((60, 110, 160))}, liste)
 
 
 def livre_sans_reperes() -> bytes:

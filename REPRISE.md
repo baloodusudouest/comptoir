@@ -3,6 +3,7 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (14/11/2026)
+- **0.2.1** : la note en étoiles mise en titre par le livre ne remplace plus le nom (318 recettes touchées dans l'essai) ; corbeille : « Effacer maintenant », « Réimporter à neuf ». Un livre importé en 0.2.0 se relit ainsi : Supprimer, puis le redéposer et choisir « Réimporter à neuf ».
 - **0.2.0** : réglé sur un vrai livre (2 978 recettes, deux colonnes) ; onglet **Conseils** dans Cocktails ; rubriques et étoiles du livre sur la fiche ; écran **Connexion** des services ; 43 tests.
   - sonde : `sonde.py` hors dépôt, sur le livre réel, qui n'entre **jamais** dans le dépôt ; les cas rencontrés sont refaits en inventé dans `tools/fabrique.py` (`livre_deux_colonnes`) ;
   - restent 195 lignes sans ingrédient reconnu sur 13 338 (vraies absences de l'arbre : liqueur de yaourt, sève de bouleau, mascarpone…), 42 recettes sans préparation trouvée, une poignée de recettes lues comme des conseils puis écartées.
@@ -39,6 +40,7 @@
 - `/health` est public et ne rend que des nombres (faisables, à traiter) pour la tuile de l'Anneau.
 - **Conseils** : un passage sans recette est gardé s'il a 200 caractères de texte et au moins un paragraphe de 120 ; même titre ailleurs dans le livre → le plus complet ; une section à rubriques (« VERRE : ») est une recette mal lue, jamais un conseil. Un « Conseil du barman » démarre toujours son propre passage (sinon il est avalé par l'encadré précédent).
 - **Deux colonnes** : l'appariement quantités / noms ne se fait que si les deux nombres concordent ; sinon rien n'est recollé et la recette part dans À traiter.
+- **Faux titres** : un titre sans lettre n'est jamais un nom de recette (`sans_faux_titres`). La note sous un nom est une note ; seule, elle ouvre une recette « Sans nom » (À traiter), sinon deux recettes se fondent.
 - Navigation à six entrées (plafond du socle) : les Conseils sont un onglet de Cocktails, pas une entrée de plus.
 
 ## Décisions tranchées

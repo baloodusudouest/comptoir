@@ -3,7 +3,7 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (14/11/2026)
-- **0.2.1** : la note en étoiles mise en titre par le livre ne remplace plus le nom (318 recettes touchées dans l'essai) ; corbeille : « Effacer maintenant », « Réimporter à neuf ». Un livre importé en 0.2.0 se relit ainsi : Supprimer, puis le redéposer et choisir « Réimporter à neuf ».
+- **0.2.1** : la note en étoiles mise en titre par le livre ne remplace plus le nom (318 recettes touchées dans l'essai) ; corbeille : « Effacer maintenant », « Réimporter à neuf ». Un livre importé avant se relit ainsi : le redéposer et choisir « Réimporter à neuf » (0.2.2 : plus besoin de le supprimer d'abord).
 - **0.2.0** : réglé sur un vrai livre (2 978 recettes, deux colonnes) ; onglet **Conseils** dans Cocktails ; rubriques et étoiles du livre sur la fiche ; écran **Connexion** des services ; 43 tests.
   - sonde : `sonde.py` hors dépôt, sur le livre réel, qui n'entre **jamais** dans le dépôt ; les cas rencontrés sont refaits en inventé dans `tools/fabrique.py` (`livre_deux_colonnes`) ;
   - restent 195 lignes sans ingrédient reconnu sur 13 338 (vraies absences de l'arbre : liqueur de yaourt, sève de bouleau, mascarpone…), 42 recettes sans préparation trouvée, une poignée de recettes lues comme des conseils puis écartées.

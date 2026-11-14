@@ -190,3 +190,19 @@ def test_conseils_et_rubriques_du_livre(navigateur, adresse, taille):
     page.get_by_text("Mon avis").wait_for()
     sans_debordement(page)
     assert erreurs == []
+
+
+@pytest.mark.parametrize("taille", TAILLES)
+def test_redeposer_un_livre_deja_importe(navigateur, adresse, taille, tmp_path):
+    """Redéposer un livre déjà là : le message propose « Réimporter à neuf » (pas cliqué ici : le serveur est partagé)."""
+    from tools.fabrique import livre_scriptorium
+    fichier = tmp_path / "cocktails-du-port.epub"
+    fichier.write_bytes(livre_scriptorium())
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    page.goto(adresse + "/#/reglages")
+    page.get_by_text("Cocktails du port", exact=True).wait_for()
+    page.locator("input[type=file]").set_input_files(str(fichier))
+    page.get_by_text("Ce livre est déjà importé").wait_for()
+    page.get_by_role("button", name="Réimporter à neuf").wait_for()
+    sans_debordement(page)
+    assert erreurs == []

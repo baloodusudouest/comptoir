@@ -236,7 +236,7 @@ async def importer(request: Request, nom: str = "livre.epub"):
         return JSONResponse({"detail": f"« {deja['titre']} » est dans la corbeille : le restaurer plutôt que de l'importer à nouveau ?",
                              "corbeille": deja["id"]}, status_code=409)
     if deja:
-        raise HTTPException(409, f"Ce livre est déjà importé (« {deja['titre']} »).")
+        return JSONResponse({"detail": f"Ce livre est déjà importé (« {deja['titre']} »).", "deja": deja["id"]}, status_code=409)
     try:
         lu = epub.lire(contenu, ETAT["arbre"])
     except epub.LivreIllisible as e:

@@ -1,5 +1,9 @@
 # Journal des versions
 
+## 0.2.2 — 14 novembre 2026
+- Redéposer un livre déjà importé propose **Réimporter à neuf** en un clic (il passe par la corbeille et y est effacé), au lieu d'un simple refus. Plus besoin de le supprimer d'abord.
+- 47 tests.
+
 ## 0.2.1 — 14 novembre 2026
 - Corrigé : 318 recettes du livre d'essai avaient pour nom leurs étoiles (« ★★★★☆ »). Le livre écrit la note, et parfois un « 0 », comme des titres sous le nom du cocktail. Ces faux titres sont écartés et la note est lue comme note. Le nom est cherché au-dessus, même séparé par une image ou un parasite du scan (« O-E »), ou écrit en simple paragraphe en capitales. Une note sans aucun nom au-dessus donne une recette « Sans nom, p. N » envoyée dans À traiter, au lieu de se fondre dans la précédente.
 - Petits parasites du scan (moins de trois lettres) écartés du chapeau.

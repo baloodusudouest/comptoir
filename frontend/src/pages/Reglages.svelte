@@ -22,6 +22,7 @@
   let aSupprimer = $state(null)     // aperçu de la suppression en attente de confirmation
   let aRestaurer = $state(null)     // livre en corbeille proposé à la place d'un nouvel import
   let dernierFichier = null        // le fichier déposé, pour « Réimporter à neuf »
+  let dejaImporte = $state(null)    // livre déjà importé (et pas supprimé) qu'on vient de redéposer
   let eqA = $state('')
   let eqB = $state('')
 
@@ -44,6 +45,7 @@
     envoi = true
     message = erreur = ''
     aRestaurer = null
+    dejaImporte = null
     try {
       const r = await api.envoyer(`/api/livres/import?nom=${encodeURIComponent(fichier.name)}`, fichier)
       message = `« ${r.titre} » : ${r.recettes} recettes lues${r.a_verifier ? `, dont ${r.a_verifier} à vérifier dans À traiter` : ''}`
@@ -52,6 +54,7 @@
       await Promise.all([charger(), recharger()])
     } catch (err) {
       if (err.donnees?.corbeille) aRestaurer = corbeille.find((c) => c.id === err.donnees.corbeille) ?? { id: err.donnees.corbeille }
+      if (err.donnees?.deja) dejaImporte = livres.find((l) => l.id === err.donnees.deja) ?? { id: err.donnees.deja }
       erreur = err.message
     } finally {
       envoi = false
@@ -72,9 +75,12 @@
     await charger()
   }
   async function reimporterANeuf() {
-    // Efface l'ancienne lecture (corbeille), puis relit le même fichier avec le découpage de cette version
-    await api.del(`/api/corbeille/${aRestaurer.id}`)
-    aRestaurer = null
+    // Efface l'ancienne lecture, puis relit le même fichier avec le découpage de cette version.
+    // Livre encore actif : il passe d'abord par la corbeille (la suppression est notée au journal).
+    const id = (aRestaurer ?? dejaImporte).id
+    if (dejaImporte) await api.del(`/api/livres/${id}`)
+    await api.del(`/api/corbeille/${id}`)
+    aRestaurer = dejaImporte = null
     await importer(dernierFichier)
   }
   async function restaurer(id) {
@@ -118,6 +124,10 @@
     </div>
     {#if message}<p class="mt-3 text-sm" role="status">{message}</p>{/if}
     {#if erreur}<p class="mt-3 text-sm text-destructive" role="alert">{erreur}</p>{/if}
+    {#if dejaImporte}
+      <Button class="mt-2" variant="outline" onclick={reimporterANeuf} disabled={envoi}><Upload class="size-4" /> Réimporter à neuf</Button>
+      <p class="mt-2 text-sm text-muted-foreground">Relit le livre avec le découpage de cette version. L'ancienne lecture est effacée, avec ses favoris et ses corrections ; ton bar ne change pas.</p>
+    {/if}
     {#if aRestaurer}
       <div class="mt-2 flex flex-wrap gap-2">
         <Button variant="outline" onclick={() => restaurer(aRestaurer.id)}><RotateCcw class="size-4" /> Restaurer tel quel</Button>

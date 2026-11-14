@@ -85,6 +85,9 @@ def test_effacer_maintenant_puis_reimporter_a_neuf(client):
     assert list((data / "livres").glob("*.epub")) == [] and list((data / "photos").glob("*.webp")) == []
     neuf = importer(client, livre_scriptorium())
     assert neuf.status_code == 200 and neuf.json()["recettes"] == 6
+    # Redéposé alors qu'il est toujours là : la réponse donne son numéro, pour « Réimporter à neuf » en un clic
+    doublon = importer(client, livre_scriptorium())
+    assert doublon.status_code == 409 and doublon.json()["deja"] == neuf.json()["id"]
     assert any(j["action"] == "effacement" for j in client.get("/api/journal").json())
 
 

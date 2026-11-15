@@ -26,16 +26,15 @@
   - supprimer un livre : corbeille de 30 jours, restauration à l'identique, effacement par la tâche de fond ; le bar ne bouge pas ;
   - journal avec Annuler (corrections, rattachements, recettes écartées) ;
   - tests : 36 (serveur, faux Wikidata, faux Mistral, écran sur PC et iPhone par `tools/demo.py`).
+- **Essayé sur la vraie installation (15/11/2026)** : 0.4.1 déployée sur le NAS, livre d'essai réimporté à neuf par l'interface, tuile dans l'Anneau, Wikidata et Mistral vérifiés depuis l'écran Connexion.
 - **Jamais essayé sur la vraie installation** :
-  - l'import du vrai livre par l'interface, sur le NAS (le découpage l'a lu ici, hors appli) ;
   - les conseils d'un livre complet : l'essai n'en a que neuf (glace, rolling, filtration fine, pilonnage…) ;
-  - le vrai Wikidata et le vrai Mistral depuis le NAS ;
-  - la tablette du bar.
+  - la tablette du bar, le HTTPS (écran allumé en mode Préparer), le zoom de la carte en pinçant.
 
 ## Prochaine étape
-1. Déployer la 0.2.0 (service `comptoir` déjà dans `homelab.yml`, port 8092) et importer le livre d'essai par Réglages.
-2. Quand le livre complet est scanné : le réimporter (supprimer l'essai d'abord), relire les Conseils (thèmes, passages manquants ou en trop) et les ingrédients inconnus dans À traiter.
-3. Tuile dans l'Anneau (`services.yaml`, posé à la main).
+1. Quand le livre complet est scanné : le réimporter à neuf, relire les Conseils (thèmes, passages manquants ou en trop) et rattacher les ingrédients inconnus dans À traiter.
+2. HTTPS par Tailscale Serve, puis essai sur la tablette du bar.
+3. Temps 2 (carte des invités) après un nouveau passage au conseil. La liste à jour est dans Atlas (`reste_a_faire` de Comptoir).
 
 ## Pièges
 - **Écran allumé** : l'API Wake Lock ne marche qu'en HTTPS. Ouvert en http par Tailscale, le mode Préparer le dit, et l'écran peut se mettre en veille. Pour la tablette : adresse Tailscale Serve en HTTPS (comme la caméra de Scriptorium).

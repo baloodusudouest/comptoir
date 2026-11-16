@@ -187,6 +187,36 @@ def test_a_traiter_et_reglages(navigateur, adresse, taille):
 
 
 @pytest.mark.parametrize("taille", TAILLES)
+def test_reglages_et_restaurer(navigateur, adresse, taille):
+    """Tuile Réglages (interrupteur remis comme trouvé) et tuile Restaurer (comparer sans appliquer : serveur partagé)."""
+    page, erreurs = ouvrir(navigateur, adresse, taille)
+    page.goto(adresse + "/#/reglages")
+    page.get_by_role("heading", name="Réglages", level=2, exact=True).wait_for()
+    interrupteur = page.get_by_role("switch", name="Recherche d'origine dans Wikidata")
+    assert interrupteur.get_attribute("aria-checked") == "true"
+    interrupteur.click()
+    page.get_by_text("Recherche d'origine coupée").wait_for()
+    assert interrupteur.get_attribute("aria-checked") == "false"
+    interrupteur.click()
+    page.get_by_text("Recherche d'origine rallumée").wait_for()
+    sans_debordement(page)
+    page.get_by_role("heading", name="Restaurer les réglages").wait_for()
+    page.get_by_role("button", name="Voir les sauvegardes").click()
+    choix = page.get_by_label("Date de la sauvegarde")
+    choix.wait_for()
+    choix.select_option("2026-11-14")
+    page.get_by_role("button", name="Comparer").click()
+    differences = page.locator("ul[aria-label='Différences avec la sauvegarde'] li")
+    differences.first.wait_for()
+    assert "oui → non" in differences.first.inner_text().replace("\n", " ")
+    page.get_by_role("button", name="Restaurer ces réglages").wait_for()
+    sans_debordement(page)
+    page.get_by_role("button", name="Garder les actuels").click()
+    assert interrupteur.get_attribute("aria-checked") == "true"
+    assert erreurs == []
+
+
+@pytest.mark.parametrize("taille", TAILLES)
 def test_connexion_des_services(navigateur, adresse, taille):
     page, erreurs = ouvrir(navigateur, adresse, taille)
     page.goto(adresse + "/#/connexion")

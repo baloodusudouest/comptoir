@@ -9,12 +9,14 @@ services:
       - "${PORT_COMPTOIR:-8092}:8092"            # réseau local et Tailscale uniquement
     environment:
       - TZ=Europe/Paris
-      # 0.5 : variable commune de la maison (module app/maison.py) ; l'ancienne reste lue en repli
-      - MAISON_PASSWORD=${MAISON_PASSWORD}       # mot de passe commun des applis (12 caractères au moins ; repli : COMPTOIR_PASSWORD)
-      # - COMPTOIR_PASSWORD=${CARNET_PASSWORD}   # ancien nom, lu tant que MAISON_PASSWORD n'est pas dans la stack
+      # Variables communes de la maison (module app/maison.py)
+      - MAISON_PASSWORD=${MAISON_PASSWORD}       # mot de passe commun des applis (12 caractères au moins)
+      - MAISON_JETON=${MAISON_JETON:-}           # jeton commun : ouvre /externe/sauvegarde à l'Anneau et lit ses sauvegardes ; vide : porte fermée
       - COMPTOIR_MISTRAL_CLE=${COMPTOIR_MISTRAL_CLE:-}         # facultatif : relire une recette mal découpée, sur un clic
-      - COMPTOIR_RECHERCHE_WEB=${COMPTOIR_RECHERCHE_WEB:-oui}  # « non » : aucune recherche d'origine dans Wikidata
+      # 0.6 : la recherche d'origine dans Wikidata se règle dans Comptoir (Réglages). L'ancienne ligne
+      # COMPTOIR_RECHERCHE_WEB est reprise une seule fois, au premier démarrage de la 0.6, puis n'est plus lue :
+      # elle peut quitter la stack ensuite.
     volumes:
-      - ${COMPTOIR_DATA_DIR}:/data               # comptoir.db, livres/ (les EPUB déposés), photos/
+      - ${COMPTOIR_DATA_DIR}:/data               # comptoir.db, reglages.json, livres/ (les EPUB déposés), photos/
     labels:
       - "com.centurylinklabs.watchtower.enable=false"

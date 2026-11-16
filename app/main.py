@@ -1,6 +1,7 @@
 """Comptoir : les cocktails de la maison, depuis des livres EPUB.
 
-Routes publiques : /health, /api/session, /api/connexion. Tout le reste demande la session.
+Routes publiques : /health, /api/session, /api/connexion. /externe/sauvegarde s'ouvre au seul jeton commun
+(MAISON_JETON) pour l'Anneau. Tout le reste demande la session.
 Comptoir n'écrit chez aucun service extérieur : il lit Wikidata (origine) et, sur un clic, envoie le texte
 d'une recette à Mistral. Tout ce qu'il écrit reste dans son dossier de données.
 """
@@ -9,6 +10,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
+import urllib.error
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -17,11 +20,11 @@ import httpx
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import __version__, epub, mistral
+from . import __version__, epub, maison, mistral
 from .auth import COMMUN, DUREE, Sessions
 from .base import Base, maintenant
 from .calcul import Bar, calculer, manquants
-from .config import APPLI, Config, charger
+from .config import APPLI, EXCLUS_SAUVEGARDE, REGLAGES, REPRISES, Config, charger
 from .ingredients import Arbre, lire_ligne, normaliser, rapprocher
 from .lieux import Lieux
 from .travail import Travail
@@ -45,9 +48,14 @@ async def cycle(app: FastAPI):
     for d in ("", "livres", "photos"):
         (cfg.data / d).mkdir(parents=True, exist_ok=True)
     base = Base(cfg.data)
-    ETAT.update(cfg=cfg, base=base, sessions=Sessions(APPLI, cfg.password, _generation(cfg)), lieux=Lieux())
+    # Réglages d'usage : <data>/reglages.json ; l'ancienne variable de la stack n'est lue qu'au premier démarrage
+    reglages = maison.Reglages(cfg.data / "reglages.json", REGLAGES, REPRISES)
+    for k in reglages.repris:
+        base.noter("reglage", NOMS_REGLAGES.get(k, k), f"repris de la stack ({REPRISES[k]}) au premier démarrage : "
+                   f"{_texte(reglages.get(k))} ; il se change maintenant dans Réglages")
+    ETAT.update(cfg=cfg, base=base, reglages=reglages, sessions=Sessions(APPLI, cfg.password, _generation(cfg)), lieux=Lieux())
     recharger_arbre()
-    travail = Travail(base, ETAT["lieux"], cfg, ETAT.get("client_wikidata"))
+    travail = Travail(base, ETAT["lieux"], cfg, reglages, ETAT.get("client_wikidata"))
     ETAT["travail"] = travail
     if cfg.travail_auto:
         travail.demarrer()
@@ -61,6 +69,10 @@ app = FastAPI(title=APPLI, version=__version__, lifespan=cycle, docs_url=None, r
 
 def B() -> Base:
     return ETAT["base"]
+
+
+def R() -> maison.Reglages:
+    return ETAT["reglages"]
 
 
 def recharger_arbre() -> Arbre:
@@ -95,7 +107,7 @@ def sante():
 def session(request: Request):
     cfg: Config = ETAT["cfg"]
     return {"connecte": ETAT["sessions"].connecte(request.cookies), "version": __version__,
-            "mistral": bool(cfg.mistral_cle), "recherche_web": cfg.recherche_web}
+            "mistral": bool(cfg.mistral_cle), "recherche_web": R().get("recherche_web") if "reglages" in ETAT else True}
 
 
 @app.post("/api/connexion")
@@ -730,14 +742,14 @@ def sources():
     cfg: Config = ETAT["cfg"]
     derniers = {s: B().lire("SELECT le, cible, statut FROM appel_externe WHERE service = ? ORDER BY id DESC LIMIT 5", s) for s in ("wikidata", "mistral")}
     return [
-        {"id": "wikidata", "nom": "Wikidata", "actif": cfg.recherche_web, "role": "Lit le pays ou le lieu de création des cocktails (lecture seule, une fois par recette).",
+        {"id": "wikidata", "nom": "Wikidata", "actif": R().get("recherche_web"), "role": "Lit le pays ou le lieu de création des cocktails (lecture seule, une fois par recette).",
          "lit": "Le nom du cocktail et, s'il existe, son pays ou son lieu d'origine.",
          "ecrit": "Rien chez Wikidata. Un lieu sûr est posé dans Comptoir ; un doute part dans À traiter.",
-         "reglage": "COMPTOIR_RECHERCHE_WEB", "derniers": derniers["wikidata"]},
+         "reglage": "Réglages › Recherche d'origine dans Wikidata", "ou": "reglages", "derniers": derniers["wikidata"]},
         {"id": "mistral", "nom": "Mistral", "actif": bool(cfg.mistral_cle), "role": "Relit une recette mal découpée, seulement sur ton clic ; rien n'est enregistré sans ta validation.",
          "lit": "Le texte d'une seule recette, celle que tu lui envoies depuis À traiter.",
          "ecrit": "Rien : sa proposition attend que tu la valides ou la corriges.",
-         "reglage": "COMPTOIR_MISTRAL_CLE", "derniers": derniers["mistral"]},
+         "reglage": "COMPTOIR_MISTRAL_CLE", "ou": "stack", "derniers": derniers["mistral"]},
     ]
 
 
@@ -746,8 +758,8 @@ def verifier_source(nom: str):
     cfg: Config = ETAT["cfg"]
     try:
         if nom == "wikidata":
-            if not cfg.recherche_web:
-                return {"ok": False, "message": "Recherche coupée dans la stack (COMPTOIR_RECHERCHE_WEB=non)."}
+            if not R().get("recherche_web"):
+                return {"ok": False, "message": "Recherche coupée dans Réglages (recherche d'origine dans Wikidata)."}
             client = ETAT.get("client_wikidata") or httpx.Client(timeout=10, headers={"User-Agent": "Comptoir (appli maison)"})
             r = client.get(cfg.wikidata_url, params={"action": "query", "meta": "siteinfo", "format": "json"})
             return {"ok": r.status_code == 200, "message": "Wikidata répond." if r.status_code == 200 else f"Wikidata a répondu {r.status_code}."}
@@ -762,6 +774,111 @@ def verifier_source(nom: str):
     except httpx.HTTPError as e:
         return {"ok": False, "message": f"Pas de réponse ({e.__class__.__name__})."}
     raise HTTPException(404, "Source inconnue.")
+
+
+# ================================================================ réglages d'usage, sauvegarde et restauration (contrat 1)
+
+NOMS_REGLAGES = {"recherche_web": "Recherche d'origine dans Wikidata"}
+JOUR = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _texte(v) -> str:
+    return "oui" if v is True else "non" if v is False else str(v)
+
+
+@app.get("/api/reglages")
+def lire_reglages():
+    return R().tout()
+
+
+@app.put("/api/reglages")
+def changer_reglages(corps: dict = Body(...)):
+    if not isinstance(corps, dict) or not corps:
+        raise HTTPException(400, "Rien à changer.")
+    inconnus = [k for k in corps if k not in REGLAGES]
+    if inconnus:
+        raise HTTPException(400, f"Réglage inconnu : {', '.join(inconnus)}.")
+    for k, v in corps.items():
+        if isinstance(REGLAGES[k], bool) and not isinstance(v, bool):
+            raise HTTPException(400, f"« {NOMS_REGLAGES.get(k, k)} » : oui ou non attendu (true ou false).")
+    avant = R().tout()
+    try:
+        apres = R().changer(corps)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(400, f"Valeur refusée : {e}.")
+    for k in corps:
+        if avant.get(k) != apres.get(k):
+            B().noter("reglage", NOMS_REGLAGES.get(k, k), f"{_texte(avant.get(k))} → {_texte(apres.get(k))}")
+    return apres
+
+
+@app.get("/externe/sauvegarde")
+def externe_sauvegarde(request: Request):
+    """Pour l'Anneau (collecte de nuit) : les réglages d'usage et la version, rien d'autre. Jeton commun seulement ;
+    MAISON_JETON vide : porte fermée."""
+    acceptes = maison.jetons()
+    if not acceptes:
+        raise HTTPException(404, "Not Found")
+    if not maison.jeton_valide(maison.jeton_propose(request.headers), acceptes):
+        raise HTTPException(401, "Jeton refusé.")
+    return maison.sauvegarde(APPLI, __version__, R().tout(), exclus=EXCLUS_SAUVEGARDE)
+
+
+def _demander_anneau(le: str = "") -> dict:
+    """Lit une sauvegarde chez l'Anneau ; toute panne devient un message clair (503 injoignable, 404 rien)."""
+    try:
+        r = maison.lire_sauvegarde(APPLI, le, lire=ETAT.get("lire_anneau"))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise HTTPException(404, "L'Anneau n'a aucune sauvegarde de Comptoir pour ce jour." if le
+                                else "L'Anneau n'a encore aucune sauvegarde de Comptoir.")
+        raise HTTPException(503, f"L'Anneau a répondu {e.code} : restauration impossible pour l'instant.")
+    except HTTPException:
+        raise
+    except Exception as e:                                     # noqa: BLE001 — Anneau injoignable, réponse illisible…
+        raise HTTPException(503, f"L'Anneau est injoignable ({e.__class__.__name__}) : restauration impossible pour l'instant.")
+    if not isinstance(r, dict):
+        raise HTTPException(503, "Réponse de l'Anneau illisible.")
+    return r
+
+
+def _sauvegarde_du(le: str) -> dict:
+    if not JOUR.match(le or ""):
+        raise HTTPException(400, "Date attendue au format AAAA-MM-JJ.")
+    r = _demander_anneau(le)
+    if not isinstance(r.get("reglages"), dict):
+        raise HTTPException(404, "L'Anneau n'a aucune sauvegarde de Comptoir pour ce jour.")
+    return r
+
+
+@app.get("/api/restaurer")
+def apercu_restaurer(le: str = ""):
+    """Sans « le » : les dates sauvegardées chez l'Anneau. Avec « le » : ce qui changerait (actuel → sauvegardé)."""
+    if not le:
+        dates = _demander_anneau().get("dates") or []
+        return {"dates": [str(d) for d in dates]}
+    s = _sauvegarde_du(le)
+    diffs = maison.differences(R().tout(), s["reglages"], EXCLUS_SAUVEGARDE)
+    for d in diffs:
+        d["nom"] = NOMS_REGLAGES.get(d["cle"], d["cle"])
+    return {"le": s.get("le", le), "version": s.get("version", ""), "differences": diffs}
+
+
+@app.post("/api/restaurer")
+def restaurer_reglages(corps: dict = Body(...)):
+    """Applique les réglages d'une sauvegarde (réglages seulement, jamais les livres ni le bar). Permis en lecture seule."""
+    le = str((corps or {}).get("le", ""))
+    s = _sauvegarde_du(le)
+    diffs = maison.differences(R().tout(), s["reglages"], EXCLUS_SAUVEGARDE)
+    if not diffs:
+        return {"reglages": R().tout(), "changes": 0}
+    try:
+        apres = R().changer({d["cle"]: d["sauve"] for d in diffs})
+    except (TypeError, ValueError) as e:
+        raise HTTPException(400, f"Sauvegarde illisible : {e}.")
+    B().noter("restauration_reglages", f"sauvegarde du {le}",
+              " ; ".join(f"{NOMS_REGLAGES.get(d['cle'], d['cle'])} : {_texte(d['actuel'])} → {_texte(d['sauve'])}" for d in diffs))
+    return {"reglages": apres, "changes": len(diffs)}
 
 
 # ================================================================ interface

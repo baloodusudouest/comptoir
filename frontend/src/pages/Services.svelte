@@ -1,6 +1,6 @@
 <script>
   // « Connexion » : une tuile par service extérieur (Wikidata, Mistral), avec son voyant. Toucher une tuile ouvre le
-  // service : ce que Comptoir y lit, ce qu'il y écrit, le réglage de la stack, les derniers appels et « Vérifier ».
+  // service : ce que Comptoir y lit, ce qu'il y écrit, le réglage (écran Réglages ou stack), les derniers appels et « Vérifier ».
   // (pages/Connexion.svelte est la page du mot de passe : ne pas confondre.)
   import { onMount } from 'svelte'
   import Globe from '@lucide/svelte/icons/globe'
@@ -42,7 +42,7 @@
         <span class={`size-2.5 rounded-full ${s.actif ? 'bg-valide' : 'bg-muted-foreground/40'}`} aria-hidden="true"></span>
       </span>
       <span class="font-medium">{s.nom}</span>
-      <span class="text-sm text-muted-foreground">{s.actif ? 'actif' : 'coupé dans la stack'}</span>
+      <span class="text-sm text-muted-foreground">{s.actif ? 'actif' : s.ou === 'reglages' ? 'coupé dans Réglages' : 'coupé dans la stack'}</span>
     </button>
   {/each}
 </div>
@@ -61,7 +61,13 @@
       <dt class="text-muted-foreground">Ce qu'il lit</dt><dd>{service.lit}</dd>
       <dt class="text-muted-foreground">Ce qu'il écrit</dt><dd>{service.ecrit}</dd>
       <dt class="text-muted-foreground">Réglage</dt>
-      <dd><code class="rounded bg-secondary px-1.5 py-0.5">{service.reglage}</code>{service.actif ? '' : ' : à remplir dans la stack Portainer pour l\'activer'}</dd>
+      <dd>
+        {#if service.ou === 'reglages'}
+          <a href="#/reglages" class="underline underline-offset-2">{service.reglage}</a>{service.actif ? '' : ' : à rallumer pour l\'activer'}
+        {:else}
+          <code class="rounded bg-secondary px-1.5 py-0.5">{service.reglage}</code>{service.actif ? '' : ' : à remplir dans la stack Portainer pour l\'activer'}
+        {/if}
+      </dd>
     </dl>
     <h3 class="mt-5 text-sm font-medium">Derniers appels</h3>
     {#if service.derniers.length}

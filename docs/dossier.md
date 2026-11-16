@@ -142,10 +142,12 @@ Chaque lieu a une **source** (livre, Wikidata, Wikipédia, règle, main) et un �
 
 `/health` rend le nombre de cocktails faisables pour la tuile de l'Anneau, et le nombre de cas dans À traiter comme « action à faire ».
 
+0.6 (contrat de sauvegarde 1) : `GET /externe/sauvegarde`, ouvert au seul jeton commun `MAISON_JETON`, rend les réglages d'usage (`recherche_web`) et la version ; l'Anneau les collecte chaque nuit. Réglages › « Restaurer les réglages » relit une sauvegarde chez l'Anneau, montre les différences et les applique après confirmation.
+
 ### Sécurité
 
-- `MAISON_PASSWORD` (0.5 ; repli : `COMPTOIR_PASSWORD`), obligatoire : sans lui, le conteneur ne démarre pas ; cookie commun `maison_session` accepté.
-- Aucune adresse à jeton en V1 (la porte `/ha/…` et `/invite/<jeton>` vient avec le temps 2).
+- `MAISON_PASSWORD` (seul nom lu depuis la 0.6), obligatoire : sans lui, le conteneur ne démarre pas ; cookie commun `maison_session` accepté.
+- Une seule adresse à jeton : `/externe/sauvegarde` (0.6), jeton commun `MAISON_JETON` ; vide : porte fermée. La porte `/ha/…` et `/invite/<jeton>` viennent avec le temps 2.
 - Comptoir n'écrit chez **aucun** service extérieur : pas de mode lecture seule nécessaire. Watchtower désactivé, comme pour les autres applis maison.
 - Appels sortants : Wikidata et Wikipédia (lecture, si « créé à » est retenu), Mistral (sur clic seulement). Chaque appel est journalisé (date, cible, recette).
 - Rien de personnel dans ce dépôt public : aucun livre, aucune recette réelle dans les tests (livre EPUB de test inventé).
@@ -153,12 +155,14 @@ Chaque lieu a une **source** (livre, Wikidata, Wikipédia, règle, main) et un �
 ### Variables de la stack (V1)
 
 ```
-MAISON_PASSWORD=            # mot de passe commun des applis maison, obligatoire (0.5 ; repli : COMPTOIR_PASSWORD)
+MAISON_PASSWORD=            # mot de passe commun des applis maison, obligatoire
+MAISON_JETON=               # jeton commun (0.6) : sauvegarde des réglages par l'Anneau, restauration
 COMPTOIR_MISTRAL_CLE=       # clé d'API Mistral, facultative (sans elle, pas d'envoi à Mistral)
-COMPTOIR_RECHERCHE_WEB=oui  # « non » : aucune recherche Wikidata / Wikipédia
 ```
 
-Volume : `/data` (comptoir.db, livres/, photos/, cache/).
+La recherche Wikidata / Wikipédia se règle dans Réglages depuis la 0.6 (`reglages.json`) ; l'ancienne `COMPTOIR_RECHERCHE_WEB` n'est lue qu'au premier démarrage, pour reprendre sa valeur.
+
+Volume : `/data` (comptoir.db, reglages.json, livres/, photos/, cache/).
 
 ---
 

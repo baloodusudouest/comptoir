@@ -1,6 +1,6 @@
 """Serveur de démonstration : Comptoir avec les trois livres inventés importés et un bar à moitié rempli.
 
-Sert aux tests d'écran et aux captures. Rien n'est demandé à Internet : Wikidata et Mistral sont simulés.
+Sert aux tests d'écran et aux captures. Rien n'est demandé à Internet : Wikidata, Mistral et l'Anneau (sauvegardes) sont simulés.
 Usage : python -m tools.demo [port]   (mot de passe : demo-demo-demo)
 """
 from __future__ import annotations
@@ -45,12 +45,22 @@ def faux_mistral(requete: httpx.Request) -> httpx.Response:
     return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(contenu)}}], "data": []})
 
 
+def faux_anneau(adresse: str, jeton: str) -> dict:
+    """Imite GET /externe/sauvegardes/comptoir de l'Anneau : deux nuits sauvegardées, la plus ancienne sans recherche."""
+    sauvees = {"2026-11-15": {"recherche_web": True}, "2026-11-14": {"recherche_web": False}}
+    if "?le=" in adresse:
+        le = adresse.split("?le=")[1]
+        return {"le": le, "version": "0.6.0", "reglages": sauvees[le]}
+    return {"dates": list(sauvees)}
+
+
 def configurer(data: Path) -> None:
     main.ETAT.clear()
     main.ETAT["cfg"] = Config(password=MDP, data=data, static=RACINE / "app" / "static", attente_connexion=False,
                               travail_auto=False, mistral_cle="demo", wikidata_url="https://wikidata.demo/w/api.php")
     main.ETAT["client_wikidata"] = httpx.Client(transport=httpx.MockTransport(faux_wikidata))
     main.ETAT["client_mistral"] = httpx.Client(transport=httpx.MockTransport(faux_mistral))
+    main.ETAT["lire_anneau"] = faux_anneau
 
 
 def preparer(data: Path) -> None:

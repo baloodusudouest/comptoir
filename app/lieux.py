@@ -2,7 +2,7 @@
 
 Les lieux connus sont embarqués (donnees/lieux.yaml). Une forme « ambiguë » (Manhattan, Champagne, Martinez…)
 ne pose jamais le lieu seule : elle devient une question dans « À traiter ».
-La recherche dans Wikidata ne fait que lire ; elle est coupée par COMPTOIR_RECHERCHE_WEB=non.
+La recherche dans Wikidata ne fait que lire ; elle se coupe dans Réglages (réglage « recherche_web »).
 """
 from __future__ import annotations
 

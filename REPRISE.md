@@ -3,7 +3,16 @@
 À lire en premier ; mis à jour dans le même commit que le code.
 
 ## État (16/11/2026)
-- **0.5.0** (16/11/2026) : variable commune (module `app/maison.py`, copie du socle 0.5.0 : ne pas le modifier ici, `python tools/diffuser_maison.py ../comptoir` depuis le socle). `config.charger` lit `MAISON_PASSWORD`, repli `COMPTOIR_PASSWORD`. Ni jeton entre applis, ni adresse d'une autre appli, ni lecture seule (Comptoir n'écrit chez aucun service). Jamais essayé sur la vraie installation : les nouvelles variables ne sont pas encore dans la stack.
+- **0.6.0** (16/11/2026) : chantier B (réglages dans l'appli, sauvegarde, restauration) et anciens noms retirés.
+  - réglage d'usage : `recherche_web` (oui/non, défaut oui), `maison.Reglages` sur `<data>/reglages.json` ; défauts et reprise dans `app/config.py` (`REGLAGES`, `REPRISES`, `EXCLUS_SAUVEGARDE`) ; repris de `COMPTOIR_RECHERCHE_WEB` au premier démarrage seulement (ligne « Réglage » au journal), ensuite la variable n'est plus lue. La tâche de fond (`travail.py`) et Connexion lisent le réglage à chaque fois : un changement s'applique tout de suite ;
+  - routes (`app/main.py`, section « réglages d'usage ») : `GET/PUT /api/reglages` (session ; mauvais type ou clé inconnue → 400), `GET /externe/sauvegarde` (jeton commun seul ; `MAISON_JETON` vide → 404 ; mauvais jeton → 401), `GET /api/restaurer` (dates), `GET /api/restaurer?le=AAAA-MM-JJ` (différences), `POST /api/restaurer` (applique, ligne « Réglages restaurés » au journal). Anneau injoignable → 503 ; rien chez l'Anneau → 404 ; le faux Anneau des tests et de la démo passe par `ETAT["lire_anneau"]` ;
+  - écran : tuiles « Réglages » et « Restaurer les réglages » en tête de `pages/Reglages.svelte` ; Connexion (`Services.svelte`) renvoie vers Réglages pour Wikidata ;
+  - nettoyage : `maison.mot_de_passe()` sans ancien nom ; `COMPTOIR_PASSWORD` et `COMPTOIR_RECHERCHE_WEB` retirés du compose ; `MAISON_JETON` ajouté (il faut maintenant le donner au conteneur pour la sauvegarde) ;
+  - variables lues : `MAISON_PASSWORD`, `MAISON_JETON` (et `MAISON_JETON_ANCIEN`, `MAISON_ANNEAU_URL` par le module), `COMPTOIR_MISTRAL_CLE`, `COMPTOIR_RECHERCHE_WEB` (premier démarrage seulement), et les techniques `COMPTOIR_DATA`, `COMPTOIR_PORT`, `COMPTOIR_MISTRAL_URL`, `COMPTOIR_MISTRAL_MODELE` (hors stack) ;
+  - **déploiement en deux temps** : d'abord la nouvelle image avec la stack actuelle (les réglages sont repris des anciennes variables au premier démarrage), vérifier Réglages, puis la nouvelle stack sans les anciennes lignes (`COMPTOIR_PASSWORD`, `COMPTOIR_RECHERCHE_WEB`) et avec `MAISON_JETON` ;
+  - attention : la 0.6 ne lit plus `COMPTOIR_PASSWORD` ; si `MAISON_PASSWORD` n'est pas encore dans le conteneur Comptoir, elle ne démarre pas ;
+  - **jamais essayé sur la vraie installation** (ni la reprise, ni la collecte par l'Anneau, ni la restauration).
+- **0.5.0** (16/11/2026) : variable commune (module `app/maison.py`, copie du socle : ne pas le modifier ici, `python tools/diffuser_maison.py ../comptoir` depuis le socle ; contrat 2 depuis la 0.6). `config.charger` lisait `MAISON_PASSWORD`, repli sur l'ancien nom (retiré en 0.6). Ni jeton entre applis, ni adresse d'une autre appli, ni lecture seule (Comptoir n'écrit chez aucun service). Jamais essayé sur la vraie installation : les nouvelles variables ne sont pas encore dans la stack.
 - **0.4.1** : rattachement des ingrédients guidé par le premier mot (`TETES` dans `ingredients.py`) ; 233 nœuds ; Mon bar sans doublon pour les familles sans variante.
 - **0.4.0** : verres (1 à 50) ou litres (0,1 à 20) — `Portions.svelte`, `volumeVerre` et `dose` dans `donnees.svelte.js` ; Préparer reçoit `?verres=` ou `?litres=`.
 - **0.3.1** : toutes les listes de noms de A à Z (`cle_alpha` dans `main.py`, `localeCompare('fr')` côté écran).
@@ -43,6 +52,8 @@
 - Le format des repères de page est celui que Scriptorium écrit depuis sa 0.2.2 : s'il change, les pages disparaissent ici (test `test_import_et_pages_du_livre_papier`).
 - La carte du monde (world-atlas 110 m) a des pays sans identifiant : la boucle est indexée par le rang, pas par l'identifiant.
 - `/health` est public et ne rend que des nombres (faisables, à traiter) pour la tuile de l'Anneau.
+- `/externe/…` n'est pas gardé par la session (le middleware ne garde que `/api/…`) : chaque route `/externe/` vérifie elle-même le jeton commun.
+- Un nouveau réglage d'usage : l'ajouter dans `REGLAGES` (le type de la valeur par défaut fixe son type), son nom dans `NOMS_REGLAGES` (`main.py`), son champ dans la tuile Réglages ; jamais un secret (la clé Mistral reste dans la stack).
 - **Conseils** : un passage sans recette est gardé s'il a 200 caractères de texte et au moins un paragraphe de 120 ; même titre ailleurs dans le livre → le plus complet ; une section à rubriques (« VERRE : ») est une recette mal lue, jamais un conseil. Un « Conseil du barman » démarre toujours son propre passage (sinon il est avalé par l'encadré précédent).
 - **Deux colonnes** : l'appariement quantités / noms ne se fait que si les deux nombres concordent ; sinon rien n'est recollé et la recette part dans À traiter.
 - **Faux titres** : un titre sans lettre n'est jamais un nom de recette (`sans_faux_titres`). La note sous un nom est une note ; seule, elle ouvre une recette « Sans nom » (À traiter), sinon deux recettes se fondent.

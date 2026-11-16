@@ -64,7 +64,11 @@ def faux():
 
 
 def fabriquer_client(tmp_path, faux, **reglages):
+    """« recherche_web=False » : réglage d'usage déjà enregistré dans <data>/reglages.json (écran Réglages)."""
     main.ETAT.clear()
+    if "recherche_web" in reglages:
+        (tmp_path / "data").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "data" / "reglages.json").write_text(json.dumps({"recherche_web": reglages.pop("recherche_web")}))
     main.ETAT["cfg"] = Config(password=MDP, data=tmp_path / "data", static=tmp_path / "static", attente_connexion=False,
                               travail_auto=False, mistral_cle=reglages.pop("mistral_cle", "cle-de-test"),
                               wikidata_url="https://wikidata.test/w/api.php", **reglages)

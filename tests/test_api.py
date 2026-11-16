@@ -30,25 +30,23 @@ def test_connexion_et_deconnexion(tmp_path, faux):
 
 def test_mot_de_passe_trop_court(monkeypatch):
     from app.config import charger
-    monkeypatch.delenv("MAISON_PASSWORD", raising=False)
-    monkeypatch.setenv("COMPTOIR_PASSWORD", "court")
-    with pytest.raises(SystemExit):
+    monkeypatch.setenv("MAISON_PASSWORD", "court")
+    with pytest.raises(SystemExit, match="MAISON_PASSWORD"):
         charger()
 
 
 def test_module_commun_maison(monkeypatch):
-    """0.5 : copie non retouchée du module du socle ; MAISON_PASSWORD lu d'abord, COMPTOIR_PASSWORD en repli."""
+    """Copie non retouchée du module du socle ; 0.6 : MAISON_PASSWORD seul, l'ancien nom ne suffit plus."""
     from app import maison
     from app.config import charger
     assert maison.empreinte_calculee() == maison.empreinte_ecrite()
+    assert maison.CONTRAT == 2 and maison.CONTRAT_SAUVEGARDE == 1
     monkeypatch.delenv("MAISON_PASSWORD", raising=False)
-    monkeypatch.delenv("COMPTOIR_PASSWORD", raising=False)
-    with pytest.raises(SystemExit, match="MAISON_PASSWORD"):
+    monkeypatch.setenv("COMPTOIR_PASSWORD", "ancien-mot-de-passe")          # ancien nom seul : Comptoir ne démarre pas
+    with pytest.raises(SystemExit, match="MAISON_PASSWORD est absent ou trop court"):
         charger()
-    monkeypatch.setenv("COMPTOIR_PASSWORD", "ancien-mot-de-passe")          # stack actuelle : ancien nom seul
-    assert charger().password == "ancien-mot-de-passe"
-    monkeypatch.setenv("MAISON_PASSWORD", "mot-de-passe-commun")            # le nom commun l'emporte
+    monkeypatch.setenv("MAISON_PASSWORD", "mot-de-passe-commun")
     assert charger().password == "mot-de-passe-commun"
-    monkeypatch.setenv("MAISON_PASSWORD", "court")                          # trop court : refusé, même en commun
+    monkeypatch.setenv("MAISON_PASSWORD", "court")                          # trop court : refusé
     with pytest.raises(SystemExit):
         charger()

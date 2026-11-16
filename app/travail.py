@@ -17,8 +17,9 @@ from .lieux import Lieux, chercher_origine, nettoyer_titre
 
 
 class Travail:
-    def __init__(self, base: Base, lieux: Lieux, cfg, client: httpx.Client | None = None):
+    def __init__(self, base: Base, lieux: Lieux, cfg, reglages, client: httpx.Client | None = None):
         self.base, self.lieux, self.cfg = base, lieux, cfg
+        self.reglages = reglages       # maison.Reglages : « recherche_web » se change dans l'écran Réglages
         self.client = client           # faux Wikidata dans les tests
         self._stop = threading.Event()
         self._fil: threading.Thread | None = None
@@ -49,7 +50,7 @@ class Travail:
 
     # ------------------------------------------------------------ origine (Wikidata)
     def a_chercher(self) -> dict | None:
-        if not self.cfg.recherche_web:
+        if not self.reglages.get("recherche_web"):
             return None
         return self.base.un(
             """SELECT r.id, r.titre FROM recette r JOIN livre l ON l.id = r.livre_id

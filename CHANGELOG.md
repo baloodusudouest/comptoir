@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 0.6.0 — 16 novembre 2026
+- **Réglages dans l'appli** : la recherche d'origine dans Wikidata s'allume et se coupe dans Réglages (interrupteur), plus dans la stack. Au premier démarrage, Comptoir reprend la valeur de l'ancienne ligne `COMPTOIR_RECHERCHE_WEB` (une ligne au journal le dit), puis ne la lit plus jamais. Les réglages sont gardés dans `reglages.json`, dans le dossier de données.
+- **Sauvegarde par l'Anneau** : nouvelle adresse `/externe/sauvegarde`, ouverte seulement avec le jeton commun `MAISON_JETON`, qui rend les réglages et la version (jamais la clé Mistral, ni mot de passe, ni chemin). Sans `MAISON_JETON`, l'adresse est fermée.
+- **Restaurer les réglages** (Réglages) : choisir une nuit sauvegardée par l'Anneau, voir ce qui changerait (actuel → sauvegardé), confirmer. Ni les livres, ni le bar, ni les favoris ne bougent. Anneau injoignable ou rien de sauvegardé : un message le dit.
+- **Anciens noms retirés** : `COMPTOIR_PASSWORD` n'est plus lu, seul `MAISON_PASSWORD` compte (sans lui, Comptoir ne démarre pas).
+- Connexion : la tuile Wikidata renvoie vers Réglages quand la recherche est coupée.
+- Tests : reprise puis variable ignorée, changement de réglage et mauvais type, porte de sauvegarde (jeton commun seul, aucun secret), restauration (dates, différences, application, Anneau injoignable), écran Réglages et Restaurer sur PC et iPhone. 67 tests.
+
 ## 0.5.0 — 16 novembre 2026
 - **Variable commune de la maison** (module `app/maison.py` du socle 0.5.0, copié tel quel) : le mot de passe est lu dans `MAISON_PASSWORD`, avec repli sur `COMPTOIR_PASSWORD`.
 - Comptoir n'échange avec aucune autre appli maison et n'écrit chez aucun service : pas de jeton commun ni de lecture seule.

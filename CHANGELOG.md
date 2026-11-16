@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 0.5.0 — 16 novembre 2026
+- **Variable commune de la maison** (module `app/maison.py` du socle 0.5.0, copié tel quel) : le mot de passe est lu dans `MAISON_PASSWORD`, avec repli sur `COMPTOIR_PASSWORD`.
+- Comptoir n'échange avec aucune autre appli maison et n'écrit chez aucun service : pas de jeton commun ni de lecture seule.
+- Rien ne change tant que la stack n'a pas la nouvelle variable : l'ancien nom reste lu.
+- Tests : mot de passe commun puis repli, copie du module non retouchée. 54 tests.
+
 ## 0.4.1 — 14 novembre 2026
 - Corrigé : un ingrédient était rattaché au mot connu le plus long contenu dans son nom, sans regarder ce qu'il était. « Liqueur de pomme » devenait du jus de pomme, « soda au gingembre » du gingembre, « crème de fraise » des fruits rouges, « sirop de marasquin » la liqueur. Désormais le premier mot (liqueur, crème, sirop, soda, jus, nectar, bitter, eau-de-vie…) dit la catégorie, et le rattachement doit y appartenir ; une marque reste acceptée (« liqueur Galliano »). Sur le livre d'essai, 233 lignes sont mieux rattachées.
 - Arbre des ingrédients : 233 nœuds. Nouveaux : liqueurs de pomme, de miel, d'ananas, de pamplemousse, de fruit de la passion, de whisky, de thé ; crèmes de fraise, de myrtille, de citron, de châtaigne, de prune, de figue, de noyaux ; cordial de citron vert, sirop de marasquin, sirop de cannelle ; soda au pamplemousse, bitter lemon.

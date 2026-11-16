@@ -5,6 +5,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import maison
+
 APPLI = "comptoir"
 
 
@@ -28,9 +30,10 @@ class Config:
 
 
 def charger() -> Config:
-    mot_de_passe = os.environ.get("COMPTOIR_PASSWORD", "")
+    mot_de_passe = maison.mot_de_passe("COMPTOIR_PASSWORD")      # 0.5 : MAISON_PASSWORD, repli sur l'ancien nom
     if len(mot_de_passe) < 12:
-        raise SystemExit("COMPTOIR_PASSWORD est absent ou trop court (12 caractères au moins) : Comptoir ne démarre pas.")
+        raise SystemExit("MAISON_PASSWORD (ou COMPTOIR_PASSWORD) est absent ou trop court (12 caractères au moins) : "
+                         "Comptoir ne démarre pas.")
     return Config(
         password=mot_de_passe,
         data=Path(os.environ.get("COMPTOIR_DATA", "/data")),

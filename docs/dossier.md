@@ -144,7 +144,7 @@ Chaque lieu a une **source** (livre, Wikidata, Wikipédia, règle, main) et un �
 
 ### Sécurité
 
-- `COMPTOIR_PASSWORD`, obligatoire : sans lui, le conteneur ne démarre pas ; cookie commun `maison_session` accepté.
+- `MAISON_PASSWORD` (0.5 ; repli : `COMPTOIR_PASSWORD`), obligatoire : sans lui, le conteneur ne démarre pas ; cookie commun `maison_session` accepté.
 - Aucune adresse à jeton en V1 (la porte `/ha/…` et `/invite/<jeton>` vient avec le temps 2).
 - Comptoir n'écrit chez **aucun** service extérieur : pas de mode lecture seule nécessaire. Watchtower désactivé, comme pour les autres applis maison.
 - Appels sortants : Wikidata et Wikipédia (lecture, si « créé à » est retenu), Mistral (sur clic seulement). Chaque appel est journalisé (date, cible, recette).
@@ -153,7 +153,7 @@ Chaque lieu a une **source** (livre, Wikidata, Wikipédia, règle, main) et un �
 ### Variables de la stack (V1)
 
 ```
-COMPTOIR_PASSWORD=          # mot de passe commun des applis maison, obligatoire
+MAISON_PASSWORD=            # mot de passe commun des applis maison, obligatoire (0.5 ; repli : COMPTOIR_PASSWORD)
 COMPTOIR_MISTRAL_CLE=       # clé d'API Mistral, facultative (sans elle, pas d'envoi à Mistral)
 COMPTOIR_RECHERCHE_WEB=oui  # « non » : aucune recherche Wikidata / Wikipédia
 ```

@@ -2,7 +2,8 @@
 
 À lire en premier ; mis à jour dans le même commit que le code.
 
-## État (14/11/2026)
+## État (16/11/2026)
+- **0.5.0** (16/11/2026) : variable commune (module `app/maison.py`, copie du socle 0.5.0 : ne pas le modifier ici, `python tools/diffuser_maison.py ../comptoir` depuis le socle). `config.charger` lit `MAISON_PASSWORD`, repli `COMPTOIR_PASSWORD`. Ni jeton entre applis, ni adresse d'une autre appli, ni lecture seule (Comptoir n'écrit chez aucun service). Jamais essayé sur la vraie installation : les nouvelles variables ne sont pas encore dans la stack.
 - **0.4.1** : rattachement des ingrédients guidé par le premier mot (`TETES` dans `ingredients.py`) ; 233 nœuds ; Mon bar sans doublon pour les familles sans variante.
 - **0.4.0** : verres (1 à 50) ou litres (0,1 à 20) — `Portions.svelte`, `volumeVerre` et `dose` dans `donnees.svelte.js` ; Préparer reçoit `?verres=` ou `?litres=`.
 - **0.3.1** : toutes les listes de noms de A à Z (`cle_alpha` dans `main.py`, `localeCompare('fr')` côté écran).

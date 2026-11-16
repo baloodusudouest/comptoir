@@ -30,6 +30,25 @@ def test_connexion_et_deconnexion(tmp_path, faux):
 
 def test_mot_de_passe_trop_court(monkeypatch):
     from app.config import charger
+    monkeypatch.delenv("MAISON_PASSWORD", raising=False)
     monkeypatch.setenv("COMPTOIR_PASSWORD", "court")
+    with pytest.raises(SystemExit):
+        charger()
+
+
+def test_module_commun_maison(monkeypatch):
+    """0.5 : copie non retouchée du module du socle ; MAISON_PASSWORD lu d'abord, COMPTOIR_PASSWORD en repli."""
+    from app import maison
+    from app.config import charger
+    assert maison.empreinte_calculee() == maison.empreinte_ecrite()
+    monkeypatch.delenv("MAISON_PASSWORD", raising=False)
+    monkeypatch.delenv("COMPTOIR_PASSWORD", raising=False)
+    with pytest.raises(SystemExit, match="MAISON_PASSWORD"):
+        charger()
+    monkeypatch.setenv("COMPTOIR_PASSWORD", "ancien-mot-de-passe")          # stack actuelle : ancien nom seul
+    assert charger().password == "ancien-mot-de-passe"
+    monkeypatch.setenv("MAISON_PASSWORD", "mot-de-passe-commun")            # le nom commun l'emporte
+    assert charger().password == "mot-de-passe-commun"
+    monkeypatch.setenv("MAISON_PASSWORD", "court")                          # trop court : refusé, même en commun
     with pytest.raises(SystemExit):
         charger()

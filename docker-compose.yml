@@ -9,7 +9,9 @@ services:
       - "${PORT_COMPTOIR:-8092}:8092"            # réseau local et Tailscale uniquement
     environment:
       - TZ=Europe/Paris
-      - COMPTOIR_PASSWORD=${APPS_PASSWORD}       # mot de passe commun à toutes les applis (12 caractères au moins)
+      # 0.5 : variable commune de la maison (module app/maison.py) ; l'ancienne reste lue en repli
+      - MAISON_PASSWORD=${MAISON_PASSWORD}       # mot de passe commun des applis (12 caractères au moins ; repli : COMPTOIR_PASSWORD)
+      # - COMPTOIR_PASSWORD=${CARNET_PASSWORD}   # ancien nom, lu tant que MAISON_PASSWORD n'est pas dans la stack
       - COMPTOIR_MISTRAL_CLE=${COMPTOIR_MISTRAL_CLE:-}         # facultatif : relire une recette mal découpée, sur un clic
       - COMPTOIR_RECHERCHE_WEB=${COMPTOIR_RECHERCHE_WEB:-oui}  # « non » : aucune recherche d'origine dans Wikidata
     volumes:

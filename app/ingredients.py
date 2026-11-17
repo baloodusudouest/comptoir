@@ -80,6 +80,15 @@ class Arbre:
         # alias triés du plus long au plus court, pour « l'alias le plus long contenu dans le nom »
         self._par_longueur = sorted(self.alias, key=len, reverse=True)
 
+    def _motifs(self) -> list:
+        """0.6.1 : motifs compilés une fois (712 alias dépassaient le cache de re : 58 ms par nom inconnu)."""
+        cle = len(self.alias)
+        if getattr(self, "_motifs_cle", None) != cle:
+            self._motifs_liste = [(a, re.compile(rf"(^|[ ']){re.escape(a)}($| )"))
+                                  for a in sorted(self.alias, key=len, reverse=True) if len(a) >= 3]
+            self._motifs_cle = cle
+        return self._motifs_liste
+
     def _ajouter(self, n: Noeud, alias: list[str] | None = None) -> None:
         self.noeuds[n.id] = n
         if n.parent:
@@ -112,8 +121,8 @@ class Arbre:
             return self.alias[n]
         tete = n.split()[0]
         permises = TETES.get(tete)
-        for a in self._par_longueur:
-            if len(a) >= 3 and re.search(rf"(^|[ ']){re.escape(a)}($| )", n):
+        for a, motif in self._motifs():
+            if motif.search(n):
                 trouve = self.alias[a]
                 # « liqueur de pomme » contient « pomme » (le jus) : refusé, car une liqueur n'est pas un jus.
                 # « liqueur Galliano » contient « galliano » (une liqueur) : accepté.

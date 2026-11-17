@@ -5,6 +5,7 @@ Coupées dans les tests (travail_auto=False), qui appellent tout_faire() à la m
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import threading
 import time
@@ -14,6 +15,8 @@ import httpx
 
 from .base import Base, maintenant
 from .lieux import Lieux, chercher_origine, nettoyer_titre
+
+log = logging.getLogger("comptoir.travail")
 
 
 class Travail:
@@ -36,11 +39,15 @@ class Travail:
         while not self._stop.is_set():
             try:
                 fait = self.une_origine()
+            except Exception:      # une erreur ne doit jamais arrêter la tâche de fond
+                log.exception("recherche d'origine en échec")
+                fait = False
+            try:                   # 0.6.1 : la purge de la corbeille ne dépend plus de Wikidata
                 if time.monotonic() - self._derniere_purge > 3600:
                     self.purger()
                     self._derniere_purge = time.monotonic()
-            except Exception:      # une erreur ne doit jamais arrêter la tâche de fond
-                fait = False
+            except Exception:
+                log.exception("purge de la corbeille en échec")
             self._stop.wait(2 if fait else 20)
 
     def tout_faire(self) -> None:
@@ -72,7 +79,7 @@ class Travail:
             try:
                 trouves = chercher_origine(titre, self.lieux, self.cfg.wikidata_url, self.client)
                 statut = "ok"
-            except httpx.HTTPError as e:
+            except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:   # 0.6.1 : réponse non JSON comprise
                 trouves, statut = None, f"erreur ({e.__class__.__name__})"
             self.base.ecrire("INSERT INTO appel_externe (le, service, cible, statut) VALUES (?, 'wikidata', ?, ?)",
                              maintenant(), titre, statut)

@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 0.6.1 — 17 novembre 2026 (corrections de l'audit)
+- **Bug** : une réponse de Wikidata qui n'est pas du JSON (portail, panne) faisait sauter la purge horaire de la corbeille ; un livre supprimé pouvait rester au-delà des 30 jours. La purge a maintenant son propre essai, et ces réponses sont notées comme une erreur ordinaire de Wikidata.
+- **Plus rapide** : la reconnaissance d'un ingrédient compile ses 712 motifs une seule fois (avant : 58 ms par nom inconnu, recompilés à chaque fois). L'import d'un livre en profite.
+- Intégration continue : l'image n'est plus publiée si les tests échouent.
+
 ## 0.6.0 — 16 novembre 2026
 - **Réglages dans l'appli** : la recherche d'origine dans Wikidata s'allume et se coupe dans Réglages (interrupteur), plus dans la stack. Au premier démarrage, Comptoir reprend la valeur de l'ancienne ligne `COMPTOIR_RECHERCHE_WEB` (une ligne au journal le dit), puis ne la lit plus jamais. Les réglages sont gardés dans `reglages.json`, dans le dossier de données.
 - **Sauvegarde par l'Anneau** : nouvelle adresse `/externe/sauvegarde`, ouverte seulement avec le jeton commun `MAISON_JETON`, qui rend les réglages et la version (jamais la clé Mistral, ni mot de passe, ni chemin). Sans `MAISON_JETON`, l'adresse est fermée.

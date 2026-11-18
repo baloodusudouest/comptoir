@@ -2,6 +2,15 @@
 
 À lire en premier ; mis à jour dans le même commit que le code.
 
+## État (18/11/2026)
+- **0.7.0** (18/11/2026) : santé des tâches de fond (socle 0.9.0, `app/maison.py` copie signée non retouchée).
+  Tâches dans `maison.TACHES` : `origine-wikidata` (régulière 60 s) et `purge-corbeille` (régulière 3 600 s), déclarées par
+  `Travail.demarrer` (rien quand `travail_auto` est coupé) ; `import-livre` (à la demande, route d'import) ; `copie-des-bases`
+  (régulière 86 400 s, `maison.planifier_copie` lancée dans `cycle`, annulée à l'arrêt). Copie de `comptoir.db` à 02:10 heure
+  de Paris dans `<data>/copies` (`comptoir-derniere.db`, `copie.json`). `/health` ajoute `version_socle`, `taches`, `copie_base`
+  (messages seulement avec `MAISON_JETON` ou une session). Un seul worker uvicorn. Tests : `tests/test_sante.py`.
+  Jamais essayé sur la vraie installation (ni la copie de nuit, ni une restauration depuis la copie).
+
 ## État (16/11/2026)
 - **0.6.0** (16/11/2026) : chantier B (réglages dans l'appli, sauvegarde, restauration) et anciens noms retirés.
   - réglage d'usage : `recherche_web` (oui/non, défaut oui), `maison.Reglages` sur `<data>/reglages.json` ; défauts et reprise dans `app/config.py` (`REGLAGES`, `REPRISES`, `EXCLUS_SAUVEGARDE`) ; repris de `COMPTOIR_RECHERCHE_WEB` au premier démarrage seulement (ligne « Réglage » au journal), ensuite la variable n'est plus lue. La tâche de fond (`travail.py`) et Connexion lisent le réglage à chaque fois : un changement s'applique tout de suite ;

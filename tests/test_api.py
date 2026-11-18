@@ -8,7 +8,7 @@ def test_sante_publique_sans_nom(tmp_path, faux):
     with fabriquer_client(tmp_path, faux) as c:
         r = c.get("/health").json()
         assert r["ok"] is True and "version" in r
-        assert set(r) <= {"ok", "version", "faisables", "a_traiter"}
+        assert set(r) <= {"ok", "version", "faisables", "a_traiter", "version_socle", "taches", "copie_base"}
 
 
 @pytest.mark.parametrize("chemin", ["/api/livres", "/api/recettes", "/api/bar", "/api/a-traiter", "/api/journal", "/api/corbeille"])

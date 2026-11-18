@@ -4,6 +4,9 @@ Routes publiques : /health, /api/session, /api/connexion. /externe/sauvegarde s'
 (MAISON_JETON) pour l'Anneau. Tout le reste demande la session.
 Comptoir n'écrit chez aucun service extérieur : il lit Wikidata (origine) et, sur un clic, envoie le texte
 d'une recette à Mistral. Tout ce qu'il écrit reste dans son dossier de données.
+0.7.0 (santé des tâches de fond, socle 0.9.0) : tâches suivies dans maison.TACHES (voir travail.py, et
+« import-livre » à la demande), copie cohérente de comptoir.db chaque nuit à 02:10 (heure de Paris) dans
+<data>/copies ; /health ajoute version_socle, taches et copie_base. Un seul worker uvicorn (registre en mémoire).
 """
 from __future__ import annotations
 
@@ -33,6 +36,7 @@ ETAT: dict = {}
 PUBLIQUES = ("/api/connexion", "/api/session")
 SEUIL_CONFIANCE = 0.6
 TAILLE_MAX = 200 * 1024 * 1024
+TACHE_IMPORT = "import-livre"     # 0.7.0 : tâche à la demande suivie dans maison.TACHES
 
 
 def _generation(cfg: Config) -> int:
@@ -59,7 +63,12 @@ async def cycle(app: FastAPI):
     ETAT["travail"] = travail
     if cfg.travail_auto:
         travail.demarrer()
+    maison.TACHES.declarer(TACHE_IMPORT, type="demande")
+    # 0.7.0 : copie cohérente de la base chaque nuit (heure de Paris), dans <data>/copies
+    copie = asyncio.create_task(maison.planifier_copie(APPLI, [cfg.data / "comptoir.db"], cfg.data / "copies",
+                                                       maison.HEURES_COPIE[APPLI]))
     yield
+    copie.cancel()
     travail.arreter()
     base.fermer()
 
@@ -94,13 +103,16 @@ async def garde(request: Request, appel):
 
 
 @app.get("/health")
-def sante():
-    """Public. Pour la tuile de l'Anneau : le nombre de cocktails faisables et de cas à traiter (aucun nom)."""
+def sante(request: Request):
+    """Public. Pour la tuile de l'Anneau : le nombre de cocktails faisables et de cas à traiter (aucun nom).
+    0.7.0 : + version_socle, taches, copie_base (messages d'erreur seulement avec le jeton commun ou une session)."""
+    taches = maison.sante(request, jeton_commun=maison.jetons(), session_ok=ETAT["sessions"].connecte(request.cookies))
     try:
         c = _calcul()
-        return {"ok": True, "version": __version__, "faisables": len(c["faisables"]), "a_traiter": _compte_a_traiter()}
+        return {"ok": True, "version": __version__, "faisables": len(c["faisables"]), "a_traiter": _compte_a_traiter(),
+                **taches}
     except Exception:   # la santé répond même si la base est occupée
-        return {"ok": True, "version": __version__}
+        return {"ok": True, "version": __version__, **taches}
 
 
 @app.get("/api/session")
@@ -255,7 +267,8 @@ async def importer(request: Request, nom: str = "livre.epub"):
     contenu = b"".join(morceaux)
     if not contenu:
         raise HTTPException(400, "Fichier vide.")
-    return await asyncio.to_thread(_importer, contenu, nom)
+    async with maison.TACHES.tour_async(TACHE_IMPORT):      # 0.7.0 : livre illisible → tâche en erreur
+        return await asyncio.to_thread(_importer, contenu, nom)
 
 
 def _importer(contenu: bytes, nom: str):

@@ -1,6 +1,8 @@
 """Tâches de fond : origine des cocktails dans Wikidata (une recette à la fois), et vidage de la corbeille.
 
 Coupées dans les tests (travail_auto=False), qui appellent tout_faire() à la main.
+0.7.0 (socle 0.9.0) : chaque tour est suivi dans maison.TACHES (« origine-wikidata », « purge-corbeille »), lu
+par /health et la veille de l'Anneau ; les erreurs restent notées au journal et la boucle continue comme avant.
 """
 from __future__ import annotations
 
@@ -13,10 +15,16 @@ from datetime import datetime, timedelta
 
 import httpx
 
+from . import maison
 from .base import Base, maintenant
 from .lieux import Lieux, chercher_origine, nettoyer_titre
 
 log = logging.getLogger("comptoir.travail")
+
+# 0.7.0 : tâches suivies (nom, période en secondes). La boucle repasse toutes les 2 à 20 s, plus jusqu'à deux appels
+# à Wikidata de 15 s chacun : 60 s évite de dire « bloquée » pendant un appel lent.
+TACHE_ORIGINE, PERIODE_ORIGINE = "origine-wikidata", 60
+TACHE_PURGE, PERIODE_PURGE = "purge-corbeille", 3600
 
 
 class Travail:
@@ -29,6 +37,8 @@ class Travail:
         self._derniere_purge = 0.0
 
     def demarrer(self) -> None:
+        maison.TACHES.declarer(TACHE_ORIGINE, PERIODE_ORIGINE)
+        maison.TACHES.declarer(TACHE_PURGE, PERIODE_PURGE)
         self._fil = threading.Thread(target=self._boucle, name="comptoir-travail", daemon=True)
         self._fil.start()
 
@@ -38,13 +48,15 @@ class Travail:
     def _boucle(self) -> None:
         while not self._stop.is_set():
             try:
-                fait = self.une_origine()
+                with maison.TACHES.tour(TACHE_ORIGINE):
+                    fait = self.une_origine()
             except Exception:      # une erreur ne doit jamais arrêter la tâche de fond
                 log.exception("recherche d'origine en échec")
                 fait = False
             try:                   # 0.6.1 : la purge de la corbeille ne dépend plus de Wikidata
-                if time.monotonic() - self._derniere_purge > 3600:
-                    self.purger()
+                if time.monotonic() - self._derniere_purge > PERIODE_PURGE:
+                    with maison.TACHES.tour(TACHE_PURGE):
+                        self.purger()
                     self._derniere_purge = time.monotonic()
             except Exception:
                 log.exception("purge de la corbeille en échec")

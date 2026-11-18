@@ -165,4 +165,4 @@ def test_restaurer_rien_chez_l_anneau(tmp_path, faux):
 def test_sante_inchangee(tmp_path, faux):
     with fabriquer_client(tmp_path, faux) as c:
         r = c.get("/health")
-        assert r.status_code == 200 and set(r.json()) <= {"ok", "version", "faisables", "a_traiter"}
+        assert r.status_code == 200 and set(r.json()) <= {"ok", "version", "faisables", "a_traiter", "version_socle", "taches", "copie_base"}

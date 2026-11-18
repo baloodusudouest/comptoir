@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 0.7.0 — 18 novembre 2026 (santé des tâches de fond)
+- **Tâches suivies** (module commun `maison.TACHES`, lues dans `/health` et par la veille de l'Anneau) : `origine-wikidata` (régulière, 60 s : la boucle repasse toutes les 2 à 20 s, plus jusqu'à deux appels à Wikidata de 15 s), `purge-corbeille` (régulière, 3 600 s), `import-livre` (à la demande : « erreur » si le dernier livre déposé n'a pas pu être lu), `copie-des-bases` (régulière, 86 400 s). Le comportement ne change pas : une erreur reste notée au journal et la boucle continue.
+- **Copie des bases** : chaque nuit à 02:10 (heure de Paris, quel que soit le fuseau du conteneur), copie cohérente de `comptoir.db` (API de sauvegarde de SQLite, contrôle d'intégrité) dans `<data>/copies/comptoir-derniere.db`, écrasée chaque nuit (Hyper Backup tient l'historique) ; résultat dans `<data>/copies/copie.json`.
+- **`/health`** : ajoute `version_socle`, `taches` et `copie_base` ; rien d'existant ne change. Les messages d'erreur des tâches n'apparaissent qu'avec le jeton commun (`Authorization: Bearer MAISON_JETON`) ou une session valide.
+- `maison.py` du socle 0.9.1. Un seul worker uvicorn (le registre des tâches vit en mémoire).
+
 ## 0.6.5 — 18 novembre 2026 (constats moyens de l'audit)
 - **M15** : une image du livre de plus de 50 millions de pixels n'est plus décodée (seul son en-tête est lu) ; la recette garde la vignette sobre.
 - **M36** : la limite de 200 Mo vaut aussi pour le contenu décompressé de l'EPUB, par fichier de l'archive et au total (tailles annoncées vérifiées d'abord, puis octets comptés pendant la décompression) ; seules les images placées dans le texte sont lues ; le fichier envoyé est refusé dès qu'il dépasse 200 Mo, sans attendre la fin ; la lecture du livre tourne dans un fil à part : le serveur continue de répondre pendant un import.

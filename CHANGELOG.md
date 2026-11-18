@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 0.6.5 — 18 novembre 2026 (constats moyens de l'audit)
+- **M15** : une image du livre de plus de 50 millions de pixels n'est plus décodée (seul son en-tête est lu) ; la recette garde la vignette sobre.
+- **M36** : la limite de 200 Mo vaut aussi pour le contenu décompressé de l'EPUB, par fichier de l'archive et au total (tailles annoncées vérifiées d'abord, puis octets comptés pendant la décompression) ; seules les images placées dans le texte sont lues ; le fichier envoyé est refusé dès qu'il dépasse 200 Mo, sans attendre la fin ; la lecture du livre tourne dans un fil à part : le serveur continue de répondre pendant un import.
+- `maison.py` du socle 0.8.2 (audit M3) : réglages secrets reconnus par mots, adresse avec identifiant écartée, champ `ecartes` dans la sauvegarde (noms seulement).
+
 ## 0.6.4 — 18 novembre 2026 (cookies Secure)
 - **Cookies `Secure` en https** (audit du 17/11/2026, même correctif dans toutes les applis maison) : ouverte en https (directement, derrière Tailscale Serve qui le dit par `X-Forwarded-Proto`, ou d'après l'origine de la page), l'appli pose ses cookies de session avec l'attribut `Secure` : ils ne partent jamais en clair. En http (adresse locale), rien ne change.
 - `entrypoint.sh` refuse de lancer l'appli en root quand `/data` appartient à root (dossier créé par Docker) et dit le remède ; dépannage seulement : `MAISON_ROOT_ACCEPTE=oui`.

@@ -26,6 +26,45 @@ class LivreIllisible(Exception):
     """Le fichier n'est pas un EPUB lisible (ou il est protégé par DRM)."""
 
 
+# 0.6.5 (audit, M36) : la limite de 200 Mo vaut aussi pour le contenu décompressé, par fichier de l'archive et au total
+DECOMPRESSE_MAX = 200 * 1024 * 1024
+# 0.6.5 (audit, M15) : au-delà, une image du livre n'est pas décodée (la recette garde la vignette sobre)
+PIXELS_MAX = 50_000_000
+TROP_GROS = "Livre trop gros une fois décompressé (200 Mo au plus)."
+
+
+class Archive:
+    """Lecture plafonnée d'un EPUB : chaque fichier lu est compté pendant la décompression (une taille annoncée
+    peut mentir) ; au-delà de DECOMPRESSE_MAX pour un fichier ou pour tout ce qui est lu, LivreIllisible."""
+
+    def __init__(self, contenu: bytes):
+        try:
+            self.zip = zipfile.ZipFile(BytesIO(contenu))
+        except zipfile.BadZipFile as e:
+            raise LivreIllisible("Ce fichier n'est pas un EPUB (archive illisible).") from e
+        if sum(i.file_size for i in self.zip.infolist()) > DECOMPRESSE_MAX:
+            raise LivreIllisible(TROP_GROS)
+        self.lu = 0
+
+    def namelist(self) -> list[str]:
+        return self.zip.namelist()
+
+    def read(self, nom: str) -> bytes:
+        if self.zip.getinfo(nom).file_size > DECOMPRESSE_MAX - self.lu:      # KeyError si absent, comme zipfile
+            raise LivreIllisible(TROP_GROS)
+        morceaux = []
+        try:
+            with self.zip.open(nom) as f:
+                while morceau := f.read(1024 * 1024):
+                    self.lu += len(morceau)
+                    if self.lu > DECOMPRESSE_MAX:
+                        raise LivreIllisible(TROP_GROS)
+                    morceaux.append(morceau)
+        except (zipfile.BadZipFile, EOFError, OSError, RuntimeError) as e:   # fichier abîmé ou chiffré
+            raise LivreIllisible("Ce fichier n'est pas un EPUB lisible (archive abîmée).") from e
+        return b"".join(morceaux)
+
+
 @dataclass
 class Bloc:
     sorte: str            # titre, para, li_ul, li_ol, image, page
@@ -226,11 +265,8 @@ POLICES = ("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC
 
 # ================================================================ ouverture
 
-def verifier_drm(contenu: bytes) -> None:
-    try:
-        z = zipfile.ZipFile(BytesIO(contenu))
-    except zipfile.BadZipFile as e:
-        raise LivreIllisible("Ce fichier n'est pas un EPUB (archive illisible).") from e
+def verifier_drm(contenu: bytes | Archive) -> None:
+    z = contenu if isinstance(contenu, Archive) else Archive(contenu)
     noms = set(z.namelist())
     if "META-INF/rights.xml" in noms:
         raise LivreIllisible("Ce livre est protégé par DRM : il ne peut pas être lu.")
@@ -319,9 +355,10 @@ def _blocs_document(contenu: bytes, chemin_doc: str) -> list[Bloc]:
 
 
 def lire_livre(contenu: bytes) -> tuple[str, str, list[Bloc], dict[str, bytes]]:
-    """Titre, auteur, blocs dans l'ordre de lecture, et images (chemin → octets)."""
-    verifier_drm(contenu)
-    z = zipfile.ZipFile(BytesIO(contenu))
+    """Titre, auteur, blocs dans l'ordre de lecture, et images (chemin → octets).
+    0.6.5 : lecture plafonnée (Archive) ; seules les images placées dans le texte sont lues."""
+    z = Archive(contenu)
+    verifier_drm(z)
     try:
         conteneur = etree.fromstring(z.read("META-INF/container.xml"))
         opf_chemin = conteneur.find(".//{*}rootfile").get("full-path")
@@ -342,7 +379,9 @@ def lire_livre(contenu: bytes) -> tuple[str, str, list[Bloc], dict[str, bytes]]:
             blocs.extend(_blocs_document(z.read(chemin), chemin))
         except KeyError:
             continue
-    images = {n: z.read(n) for n in z.namelist() if n.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp"))}
+    placees = {b.source for b in blocs if b.sorte == "image"}
+    images = {n: z.read(n) for n in z.namelist()
+              if n in placees and n.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp"))}
     return titre, auteur, blocs, images
 
 
@@ -624,7 +663,9 @@ def ecrire_photo(octets: bytes, chemin: Path, cote: int = 640) -> bool:
     """Vignette WebP carrée (recadrée au centre). Faux si l'image est illisible."""
     from PIL import Image, ImageOps
     try:
-        im = Image.open(BytesIO(octets))
+        im = Image.open(BytesIO(octets))           # n'a lu que l'en-tête
+        if im.width * im.height > PIXELS_MAX:      # 0.6.5 (M15) : jamais décodée
+            return False
         im = ImageOps.exif_transpose(im).convert("RGB")
         im = ImageOps.fit(im, (cote, cote), method=Image.Resampling.LANCZOS)
         chemin.parent.mkdir(parents=True, exist_ok=True)

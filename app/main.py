@@ -244,11 +244,21 @@ def livres():
 
 @app.post("/api/livres/import")
 async def importer(request: Request, nom: str = "livre.epub"):
-    contenu = await request.body()
+    """0.6.5 (audit, M36) : le corps est reçu par morceaux et refusé dès qu'il dépasse 200 Mo ; la lecture du livre,
+    longue, tourne dans un fil à part : le serveur continue de répondre pendant l'import."""
+    morceaux, taille = [], 0
+    async for morceau in request.stream():
+        taille += len(morceau)
+        if taille > TAILLE_MAX:
+            raise HTTPException(413, "Fichier trop gros (200 Mo au plus).")
+        morceaux.append(morceau)
+    contenu = b"".join(morceaux)
     if not contenu:
         raise HTTPException(400, "Fichier vide.")
-    if len(contenu) > TAILLE_MAX:
-        raise HTTPException(413, "Fichier trop gros (200 Mo au plus).")
+    return await asyncio.to_thread(_importer, contenu, nom)
+
+
+def _importer(contenu: bytes, nom: str):
     empreinte = hashlib.sha256(contenu).hexdigest()
     deja = B().un("SELECT id, titre, supprime_le FROM livre WHERE empreinte = ?", empreinte)
     if deja and deja["supprime_le"]:

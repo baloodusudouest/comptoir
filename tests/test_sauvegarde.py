@@ -80,7 +80,7 @@ def test_sauvegarde_jeton_commun_seulement(tmp_path, faux, monkeypatch):
         assert r.status_code == 200
         s = r.json()
         assert s["contrat"] == 1 and s["appli"] == "comptoir" and s["reglages"] == {"recherche_web": True}
-        assert set(s) == {"contrat", "appli", "version", "le", "reglages"}
+        assert set(s) == {"contrat", "appli", "version", "le", "reglages", "ecartes"}
         texte = r.text
         for interdit in ("valeur-secrete-mistral", MDP, JETON, "mistral_cle", "password", str(tmp_path), "/data"):
             assert interdit not in texte

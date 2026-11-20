@@ -218,16 +218,19 @@ def test_reglages_et_restaurer(navigateur, adresse, taille):
 
 @pytest.mark.parametrize("taille", TAILLES)
 def test_connexion_des_services(navigateur, adresse, taille):
+    """0.8.0 : écran commun (contrat 3) — deux services, donc deux fiches dépliées ; Vérifier ne teste que le sien."""
     page, erreurs = ouvrir(navigateur, adresse, taille)
     page.goto(adresse + "/#/connexion")
     page.get_by_role("heading", name="Connexion").wait_for()
-    page.get_by_role("button", name="Wikidata").click()
-    page.get_by_text("Ce qu'il écrit").wait_for()
-    page.get_by_text("Rien chez Wikidata").wait_for()
-    page.get_by_role("button", name="Vérifier").click()
-    page.get_by_text("Wikidata répond.").wait_for()                              # le faux Wikidata de la démonstration
-    page.get_by_role("button", name="Mistral").click()
-    page.get_by_text("COMPTOIR_MISTRAL_CLE").wait_for()
+    wikidata = page.locator("article", has=page.get_by_role("heading", name="Wikidata"))
+    mistral = page.locator("article", has=page.get_by_role("heading", name="Mistral"))
+    wikidata.get_by_text("Ce qui est écrit").wait_for()
+    wikidata.get_by_text("Rien chez Wikidata").wait_for()
+    mistral.get_by_text("Le texte d'une seule recette").wait_for()
+    wikidata.get_by_role("button", name="Vérifier").click()
+    wikidata.get_by_text("Wikidata répond.").wait_for()                         # le faux Wikidata de la démonstration
+    wikidata.get_by_text("Répond", exact=True).wait_for()
+    assert mistral.get_by_text("Relié", exact=True).is_visible()                 # pas essayé : seul Wikidata l'a été
     sans_debordement(page)
     assert erreurs == []
 

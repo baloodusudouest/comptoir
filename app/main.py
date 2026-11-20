@@ -7,6 +7,8 @@ d'une recette à Mistral. Tout ce qu'il écrit reste dans son dossier de donnée
 0.7.0 (santé des tâches de fond, socle 0.9.0) : tâches suivies dans maison.TACHES (voir travail.py, et
 « import-livre » à la demande), copie cohérente de comptoir.db chaque nuit à 02:10 (heure de Paris) dans
 <data>/copies ; /health ajoute version_socle, taches et copie_base. Un seul worker uvicorn (registre en mémoire).
+0.8.0 (fiches « Connexion » communes, contrat 3, socle 0.11.0) : /api/maison/services s'ouvre à la session ou à
+ANNEAU_CLE (jamais à MAISON_JETON), voir la section « fiches Connexion ».
 """
 from __future__ import annotations
 
@@ -491,6 +493,7 @@ def demander_mistral(recette_id: int):
         B().ecrire("INSERT INTO appel_externe (le, service, cible, statut) VALUES (?, 'mistral', ?, ?)", maintenant(), r["titre"], "erreur")
         raise HTTPException(502, str(e))
     B().ecrire("INSERT INTO appel_externe (le, service, cible, statut) VALUES (?, 'mistral', ?, ?)", maintenant(), r["titre"], statut)
+    SERVICES.noter("mistral", True, "Dernière relecture réussie.")
     return {"titre": rel.titre, "lignes": rel.ingredients, "etapes": rel.etapes, "chapeau": rel.chapeau, "origine": rel.origine}
 
 
@@ -760,43 +763,90 @@ def conseil(conseil_id: int):
             "pages": epub.texte_pages(c), "contenu": json.loads(c["contenu"])}
 
 
+# Textes des deux services, communs à l'ancienne route /api/sources et aux fiches « Connexion » (contrat 3).
+TEXTES_SOURCES = {
+    "wikidata": {"role": "Lit le pays ou le lieu de création des cocktails (lecture seule, une fois par recette).",
+                 "lit": "Le nom du cocktail et, s'il existe, son pays ou son lieu d'origine.",
+                 "ecrit": "Rien chez Wikidata. Un lieu sûr est posé dans Comptoir ; un doute part dans À traiter.",
+                 "reglage": "Réglages › Recherche d'origine dans Wikidata"},
+    "mistral": {"role": "Relit une recette mal découpée, seulement sur ton clic ; rien n'est enregistré sans ta validation.",
+                "lit": "Le texte d'une seule recette, celle que tu lui envoies depuis À traiter.",
+                "ecrit": "Rien : sa proposition attend que tu la valides ou la corriges.",
+                "reglage": "COMPTOIR_MISTRAL_CLE"},
+}
+
+
+def _essai_wikidata() -> tuple[bool, str]:
+    """Lecture courte de Wikidata (siteinfo), rien d'écrit. Une erreur réseau remonte (httpx.HTTPError)."""
+    cfg: Config = ETAT["cfg"]
+    if not R().get("recherche_web"):
+        return False, "Recherche coupée dans Réglages (recherche d'origine dans Wikidata)."
+    client = ETAT.get("client_wikidata") or httpx.Client(timeout=10, headers={"User-Agent": "Comptoir (appli maison)"})
+    r = client.get(cfg.wikidata_url, params={"action": "query", "meta": "siteinfo", "format": "json"})
+    return r.status_code == 200, "Wikidata répond." if r.status_code == 200 else f"Wikidata a répondu {r.status_code}."
+
+
+def _essai_mistral() -> tuple[bool, str]:
+    """Liste des modèles de Mistral (gratuite), rien d'envoyé à relire. Une erreur réseau remonte (httpx.HTTPError)."""
+    cfg: Config = ETAT["cfg"]
+    if not cfg.mistral_cle:
+        return False, "Aucune clé réglée (COMPTOIR_MISTRAL_CLE)."
+    client = ETAT.get("client_mistral") or httpx.Client(timeout=10)
+    r = client.get(cfg.mistral_url.replace("/chat/completions", "/models"), headers={"Authorization": f"Bearer {cfg.mistral_cle}"})
+    if r.status_code in (401, 403):
+        return False, "Mistral refuse la clé."
+    return r.status_code == 200, "Mistral répond et accepte la clé." if r.status_code == 200 else f"Mistral a répondu {r.status_code}."
+
+
 @app.get("/api/sources")
 def sources():
+    """Services de Comptoir, ANCIENNE forme de l'écran Connexion (jusqu'à 0.7.0). Depuis 0.8.0, l'écran lit
+    /api/maison/services (contrat 3) : cette route (et POST /api/sources/{nom}/verifier) est gardée en 0.8.0
+    seulement, à retirer en 0.9.0."""
     cfg: Config = ETAT["cfg"]
     derniers = {s: B().lire("SELECT le, cible, statut FROM appel_externe WHERE service = ? ORDER BY id DESC LIMIT 5", s) for s in ("wikidata", "mistral")}
+    w, m = TEXTES_SOURCES["wikidata"], TEXTES_SOURCES["mistral"]
     return [
-        {"id": "wikidata", "nom": "Wikidata", "actif": R().get("recherche_web"), "role": "Lit le pays ou le lieu de création des cocktails (lecture seule, une fois par recette).",
-         "lit": "Le nom du cocktail et, s'il existe, son pays ou son lieu d'origine.",
-         "ecrit": "Rien chez Wikidata. Un lieu sûr est posé dans Comptoir ; un doute part dans À traiter.",
-         "reglage": "Réglages › Recherche d'origine dans Wikidata", "ou": "reglages", "derniers": derniers["wikidata"]},
-        {"id": "mistral", "nom": "Mistral", "actif": bool(cfg.mistral_cle), "role": "Relit une recette mal découpée, seulement sur ton clic ; rien n'est enregistré sans ta validation.",
-         "lit": "Le texte d'une seule recette, celle que tu lui envoies depuis À traiter.",
-         "ecrit": "Rien : sa proposition attend que tu la valides ou la corriges.",
-         "reglage": "COMPTOIR_MISTRAL_CLE", "ou": "stack", "derniers": derniers["mistral"]},
+        {"id": "wikidata", "nom": "Wikidata", "actif": R().get("recherche_web"), "role": w["role"], "lit": w["lit"],
+         "ecrit": w["ecrit"], "reglage": w["reglage"], "ou": "reglages", "derniers": derniers["wikidata"]},
+        {"id": "mistral", "nom": "Mistral", "actif": bool(cfg.mistral_cle), "role": m["role"], "lit": m["lit"],
+         "ecrit": m["ecrit"], "reglage": m["reglage"], "ou": "stack", "derniers": derniers["mistral"]},
     ]
 
 
 @app.post("/api/sources/{nom}/verifier")
 def verifier_source(nom: str):
-    cfg: Config = ETAT["cfg"]
+    """ANCIENNE forme du « Vérifier » (jusqu'à 0.7.0), gardée en 0.8.0 seulement : à retirer en 0.9.0."""
+    essais = {"wikidata": _essai_wikidata, "mistral": _essai_mistral}
+    if nom not in essais:
+        raise HTTPException(404, "Source inconnue.")
     try:
-        if nom == "wikidata":
-            if not R().get("recherche_web"):
-                return {"ok": False, "message": "Recherche coupée dans Réglages (recherche d'origine dans Wikidata)."}
-            client = ETAT.get("client_wikidata") or httpx.Client(timeout=10, headers={"User-Agent": "Comptoir (appli maison)"})
-            r = client.get(cfg.wikidata_url, params={"action": "query", "meta": "siteinfo", "format": "json"})
-            return {"ok": r.status_code == 200, "message": "Wikidata répond." if r.status_code == 200 else f"Wikidata a répondu {r.status_code}."}
-        if nom == "mistral":
-            if not cfg.mistral_cle:
-                return {"ok": False, "message": "Aucune clé réglée (COMPTOIR_MISTRAL_CLE)."}
-            client = ETAT.get("client_mistral") or httpx.Client(timeout=10)
-            r = client.get(cfg.mistral_url.replace("/chat/completions", "/models"), headers={"Authorization": f"Bearer {cfg.mistral_cle}"})
-            if r.status_code in (401, 403):
-                return {"ok": False, "message": "Mistral refuse la clé."}
-            return {"ok": r.status_code == 200, "message": "Mistral répond et accepte la clé." if r.status_code == 200 else f"Mistral a répondu {r.status_code}."}
+        ok, message = essais[nom]()
     except httpx.HTTPError as e:
         return {"ok": False, "message": f"Pas de réponse ({e.__class__.__name__})."}
-    raise HTTPException(404, "Source inconnue.")
+    return {"ok": ok, "message": message}
+
+
+# ================================================================ fiches « Connexion » (0.8.0, contrat 3, socle 0.11.0)
+# GET /api/maison/services et POST /api/maison/services/{id}/verifier (session ou ANNEAU_CLE) : écran commun
+# $lib/services/Services.svelte, et fiche « État » de l'Anneau. Essais légers, rien d'écrit : Wikidata lit siteinfo,
+# Mistral lit sa liste de modèles (gratuite, aucune recette envoyée). Aucun geste qui écrit : Comptoir n'écrit chez
+# aucun des deux. Les livres EPUB ne sont pas un service : ils sont déposés dans Réglages et rangés dans le dossier
+# de données (<data>/livres).
+
+SERVICES = maison.Services(APPLI)
+SERVICES.ajouter(
+    "wikidata", "Wikidata",
+    lit=TEXTES_SOURCES["wikidata"]["lit"], ecrit=TEXTES_SOURCES["wikidata"]["ecrit"],
+    regle=lambda: bool(R().get("recherche_web")), reglage=TEXTES_SOURCES["wikidata"]["reglage"],
+    essai=_essai_wikidata, guide={"note": TEXTES_SOURCES["wikidata"]["role"]})
+SERVICES.ajouter(
+    "mistral", "Mistral",
+    lit=TEXTES_SOURCES["mistral"]["lit"], ecrit=TEXTES_SOURCES["mistral"]["ecrit"],
+    regle=lambda: bool(ETAT["cfg"].mistral_cle), reglage=TEXTES_SOURCES["mistral"]["reglage"],
+    essai=_essai_mistral, guide={"note": TEXTES_SOURCES["mistral"]["role"]})
+# Monté APRÈS la garde (plus haut) : le dernier middleware ajouté passe en premier.
+maison.monter_services(app, SERVICES, lambda r: "sessions" in ETAT and ETAT["sessions"].connecte(r.cookies))
 
 
 # ================================================================ réglages d'usage, sauvegarde et restauration (contrat 1)

@@ -66,6 +66,7 @@ def faux():
 def fabriquer_client(tmp_path, faux, **reglages):
     """« recherche_web=False » : réglage d'usage déjà enregistré dans <data>/reglages.json (écran Réglages)."""
     main.ETAT.clear()
+    main.SERVICES._dernier.clear()          # fiches « Connexion » : aucun essai gardé d'un test à l'autre
     if "recherche_web" in reglages:
         (tmp_path / "data").mkdir(parents=True, exist_ok=True)
         (tmp_path / "data" / "reglages.json").write_text(json.dumps({"recherche_web": reglages.pop("recherche_web")}))

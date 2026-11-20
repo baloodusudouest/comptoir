@@ -1,5 +1,15 @@
 # Journal des versions
 
+## 0.8.0 — 20 novembre 2026 (fiches « Connexion » communes, contrat 3)
+- L'écran « Connexion » passe à l'écran commun des applis maison (socle 0.11.0, `$lib/services/`, copies signées) : deux fiches dépliées (Wikidata, Mistral), « Vérifier » ne teste que son service, l'âge du dernier essai est affiché. Les phrases « Ce qui est lu » et « Ce qui est écrit » sont reprises mot pour mot ; la phrase de rôle (« Lit le pays… », « Relit une recette… ») passe dans la note de la fiche.
+- Serveur : registre `SERVICES` (`maison.Services`, section « fiches Connexion » de `app/main.py`) et `GET /api/maison/services`, `POST /api/maison/services/{id}/verifier` (session ou `ANNEAU_CLE`, au plus un essai toutes les 30 s, rien d'écrit). La fiche « État » de l'Anneau les lit. Essais : Wikidata lit `siteinfo` ; Mistral lit sa liste de modèles (gratuite, aucune recette envoyée). Wikidata est « Pas relié » quand la recherche d'origine est coupée dans Réglages ; Mistral, sans `COMPTOIR_MISTRAL_CLE`. Une relecture Mistral réussie compte comme essai.
+- Aucun geste qui écrit sur les fiches : Comptoir n'écrit chez aucun service. Les livres EPUB ne sont pas un service : ils se déposent dans Réglages et restent dans le dossier de données (`<data>/livres`).
+- Ce qui n'est plus à l'écran : le lien vers Réglages depuis la fiche Wikidata, la liste des « Derniers appels » (toujours au journal `appel_externe`, et dans l'ancienne route).
+- `maison.py` du socle 0.11.0 (contrat 3). Nouvelle variable facultative `ANNEAU_CLE`.
+- L'ancienne route `GET /api/sources` (et `POST /api/sources/{nom}/verifier`) reste en 0.8.0, plus lue par l'interface : elle ne sert qu'à l'ancien écran, à retirer en 0.9.0. `pages/Services.svelte` est retiré.
+- Tests : `tests/test_fiches_connexion.py` (forme du contrat 3, accès, pas relié, essais en lecture seule, limite de 30 s, textes repris, copies signées) ; test d'écran Connexion adapté ; contrat 3 et socle 0.11.0 dans `test_api.py` et `test_sante.py`.
+- **Jamais essayé sur la vraie installation.**
+
 ## 0.7.0 — 18 novembre 2026 (santé des tâches de fond)
 - **Tâches suivies** (module commun `maison.TACHES`, lues dans `/health` et par la veille de l'Anneau) : `origine-wikidata` (régulière, 60 s : la boucle repasse toutes les 2 à 20 s, plus jusqu'à deux appels à Wikidata de 15 s), `purge-corbeille` (régulière, 3 600 s), `import-livre` (à la demande : « erreur » si le dernier livre déposé n'a pas pu être lu), `copie-des-bases` (régulière, 86 400 s). Le comportement ne change pas : une erreur reste notée au journal et la boucle continue.
 - **Copie des bases** : chaque nuit à 02:10 (heure de Paris, quel que soit le fuseau du conteneur), copie cohérente de `comptoir.db` (API de sauvegarde de SQLite, contrôle d'intégrité) dans `<data>/copies/comptoir-derniere.db`, écrasée chaque nuit (Hyper Backup tient l'historique) ; résultat dans `<data>/copies/copie.json`.

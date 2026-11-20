@@ -40,7 +40,7 @@ def test_module_commun_maison(monkeypatch):
     from app import maison
     from app.config import charger
     assert maison.empreinte_calculee() == maison.empreinte_ecrite()
-    assert maison.CONTRAT == 2 and maison.CONTRAT_SAUVEGARDE == 1
+    assert maison.CONTRAT == 3 and maison.CONTRAT_SAUVEGARDE == 1
     monkeypatch.delenv("MAISON_PASSWORD", raising=False)
     monkeypatch.setenv("COMPTOIR_PASSWORD", "ancien-mot-de-passe")          # ancien nom seul : Comptoir ne démarre pas
     with pytest.raises(SystemExit, match="MAISON_PASSWORD est absent ou trop court"):

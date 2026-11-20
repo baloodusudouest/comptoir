@@ -2,6 +2,9 @@
 
 À lire en premier ; mis à jour dans le même commit que le code.
 
+## État (20/11/2026)
+- **0.8.0** (20/11/2026) : fiches « Connexion » communes (contrat 3, socle 0.11.0) : `SERVICES` dans `main.py` (section « fiches Connexion » : `wikidata`, `mistral`, textes communs dans `TEXTES_SOURCES`), `maison.monter_services` après la garde, écran `$lib/services/Services.svelte` (commun, signé : ne pas le retoucher ici, `python3 tools/diffuser_maison.py ../comptoir` depuis le socle). `ANNEAU_CLE` (facultative) ouvre les seules fiches à l'Anneau. Ancienne `GET /api/sources` et `POST /api/sources/{nom}/verifier` à retirer en 0.9.0. Les livres EPUB restent dans Réglages (dossier de données), pas dans Connexion. **Jamais essayé sur la vraie installation.**
+
 ## État (18/11/2026)
 - **0.7.0** (18/11/2026) : santé des tâches de fond (socle 0.9.0, `app/maison.py` copie signée non retouchée).
   Tâches dans `maison.TACHES` : `origine-wikidata` (régulière 60 s) et `purge-corbeille` (régulière 3 600 s), déclarées par
@@ -15,7 +18,7 @@
 - **0.6.0** (16/11/2026) : chantier B (réglages dans l'appli, sauvegarde, restauration) et anciens noms retirés.
   - réglage d'usage : `recherche_web` (oui/non, défaut oui), `maison.Reglages` sur `<data>/reglages.json` ; défauts et reprise dans `app/config.py` (`REGLAGES`, `REPRISES`, `EXCLUS_SAUVEGARDE`) ; repris de `COMPTOIR_RECHERCHE_WEB` au premier démarrage seulement (ligne « Réglage » au journal), ensuite la variable n'est plus lue. La tâche de fond (`travail.py`) et Connexion lisent le réglage à chaque fois : un changement s'applique tout de suite ;
   - routes (`app/main.py`, section « réglages d'usage ») : `GET/PUT /api/reglages` (session ; mauvais type ou clé inconnue → 400), `GET /externe/sauvegarde` (jeton commun seul ; `MAISON_JETON` vide → 404 ; mauvais jeton → 401), `GET /api/restaurer` (dates), `GET /api/restaurer?le=AAAA-MM-JJ` (différences), `POST /api/restaurer` (applique, ligne « Réglages restaurés » au journal). Anneau injoignable → 503 ; rien chez l'Anneau → 404 ; le faux Anneau des tests et de la démo passe par `ETAT["lire_anneau"]` ;
-  - écran : tuiles « Réglages » et « Restaurer les réglages » en tête de `pages/Reglages.svelte` ; Connexion (`Services.svelte`) renvoie vers Réglages pour Wikidata ;
+  - écran : tuiles « Réglages » et « Restaurer les réglages » en tête de `pages/Reglages.svelte` ; Connexion (`Services.svelte`, jusqu'à 0.7.0) renvoyait vers Réglages pour Wikidata ;
   - nettoyage : `maison.mot_de_passe()` sans ancien nom ; `COMPTOIR_PASSWORD` et `COMPTOIR_RECHERCHE_WEB` retirés du compose ; `MAISON_JETON` ajouté (il faut maintenant le donner au conteneur pour la sauvegarde) ;
   - variables lues : `MAISON_PASSWORD`, `MAISON_JETON` (et `MAISON_JETON_ANCIEN`, `MAISON_ANNEAU_URL` par le module), `COMPTOIR_MISTRAL_CLE`, `COMPTOIR_RECHERCHE_WEB` (premier démarrage seulement), et les techniques `COMPTOIR_DATA`, `COMPTOIR_PORT`, `COMPTOIR_MISTRAL_URL`, `COMPTOIR_MISTRAL_MODELE` (hors stack) ;
   - **déploiement en deux temps** : d'abord la nouvelle image avec la stack actuelle (les réglages sont repris des anciennes variables au premier démarrage), vérifier Réglages, puis la nouvelle stack sans les anciennes lignes (`COMPTOIR_PASSWORD`, `COMPTOIR_RECHERCHE_WEB`) et avec `MAISON_JETON` ;
@@ -56,6 +59,7 @@
 3. Temps 2 (carte des invités) après un nouveau passage au conseil. La liste à jour est dans Atlas (`reste_a_faire` de Comptoir).
 
 ## Pièges
+- **Fiches « Connexion »** : le registre `SERVICES` vit au niveau du module et garde le dernier essai 30 s ; les tests le vident dans `fabriquer_client` (`main.SERVICES._dernier.clear()`). Wikidata « Pas relié » montre « Pour le relier, dans la stack : Réglages › … » (libellé de la fiche commune) alors que c'est un réglage de l'appli.
 - **Écran allumé** : l'API Wake Lock ne marche qu'en HTTPS. Ouvert en http par Tailscale, le mode Préparer le dit, et l'écran peut se mettre en veille. Pour la tablette : adresse Tailscale Serve en HTTPS (comme la caméra de Scriptorium).
 - Dépôt public : aucun livre, aucune recette réelle, aucune valeur réelle. Les livres de test sont inventés.
 - Le format des repères de page est celui que Scriptorium écrit depuis sa 0.2.2 : s'il change, les pages disparaissent ici (test `test_import_et_pages_du_livre_papier`).

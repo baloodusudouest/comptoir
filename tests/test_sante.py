@@ -28,7 +28,7 @@ def test_health_porte_la_sante_sans_message_sans_jeton(tmp_path, faux):
         main.ETAT["travail"].demarrer()            # tâche de fond (coupée dans les tests) : déclare ses tâches
         main.ETAT["travail"].arreter()
         r = c.get("/health").json()
-        assert r["version_socle"] == "0.9.1"
+        assert r["version_socle"] == "0.11.0"
         taches = par_nom(r)
         assert set(taches) == {"origine-wikidata", "purge-corbeille", "import-livre", "copie-des-bases"}
         assert taches["origine-wikidata"]["periode_s"] == 60 and taches["purge-corbeille"]["periode_s"] == 3600

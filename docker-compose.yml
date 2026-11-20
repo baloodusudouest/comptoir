@@ -12,6 +12,7 @@ services:
       # Variables communes de la maison (module app/maison.py)
       - MAISON_PASSWORD=${MAISON_PASSWORD}       # mot de passe commun des applis (12 caractères au moins)
       - MAISON_JETON=${MAISON_JETON:-}           # jeton commun : ouvre /externe/sauvegarde à l'Anneau et lit ses sauvegardes ; vide : porte fermée
+      - ANNEAU_CLE=${ANNEAU_CLE:-}                         # contrat 3 : l'Anneau lit les fiches « Connexion » ; vide = porte fermée
       - COMPTOIR_MISTRAL_CLE=${COMPTOIR_MISTRAL_CLE:-}         # facultatif : relire une recette mal découpée, sur un clic
       # 0.6 : la recherche d'origine dans Wikidata se règle dans Comptoir (Réglages). L'ancienne ligne
       # COMPTOIR_RECHERCHE_WEB est reprise une seule fois, au premier démarrage de la 0.6, puis n'est plus lue :

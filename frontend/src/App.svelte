@@ -21,7 +21,7 @@
   import MonBar from './pages/MonBar.svelte'
   import ATraiter from './pages/ATraiter.svelte'
   import Reglages from './pages/Reglages.svelte'
-  import Services from './pages/Services.svelte'
+  import Services from '$lib/services/Services.svelte'   // 0.8.0 : écran commun (contrat 3, socle 0.11.0)
 
   const onglets = [
     { page: 'au-bar', nom: 'Au bar', icone: Martini, lien: '#/' },
@@ -123,7 +123,7 @@
           {:else if route.page === 'a-traiter'}
             <ATraiter {session} sous={route.sous} />
           {:else if route.page === 'connexion'}
-            <Services />
+            <Services ondeconnecte={() => (connecte = false)} />
           {:else if route.page === 'reglages'}
             <Reglages {session} {deconnecter} />
           {:else}

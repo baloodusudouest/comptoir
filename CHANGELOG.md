@@ -1,5 +1,9 @@
 # Journal des versions
 
+## 0.8.1 — 20 novembre 2026 (socle 0.11.1)
+- Copies communes du socle 0.11.1 : sur une fiche « Connexion », le titre devient « Pour le relier » quand le réglage se fait dans Réglages de l'appli (et non dans la stack).
+- **Jamais essayé sur la vraie installation.**
+
 ## 0.8.0 — 20 novembre 2026 (fiches « Connexion » communes, contrat 3)
 - L'écran « Connexion » passe à l'écran commun des applis maison (socle 0.11.0, `$lib/services/`, copies signées) : deux fiches dépliées (Wikidata, Mistral), « Vérifier » ne teste que son service, l'âge du dernier essai est affiché. Les phrases « Ce qui est lu » et « Ce qui est écrit » sont reprises mot pour mot ; la phrase de rôle (« Lit le pays… », « Relit une recette… ») passe dans la note de la fiche.
 - Serveur : registre `SERVICES` (`maison.Services`, section « fiches Connexion » de `app/main.py`) et `GET /api/maison/services`, `POST /api/maison/services/{id}/verifier` (session ou `ANNEAU_CLE`, au plus un essai toutes les 30 s, rien d'écrit). La fiche « État » de l'Anneau les lit. Essais : Wikidata lit `siteinfo` ; Mistral lit sa liste de modèles (gratuite, aucune recette envoyée). Wikidata est « Pas relié » quand la recherche d'origine est coupée dans Réglages ; Mistral, sans `COMPTOIR_MISTRAL_CLE`. Une relecture Mistral réussie compte comme essai.

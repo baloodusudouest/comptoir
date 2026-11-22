@@ -2,6 +2,8 @@
 
 À lire en premier ; mis à jour dans le même commit que le code.
 
+## État (22/11/2026) — 0.8.2 : barre d'onglets collée en bas sur iPhone (`App.svelte`, classes du socle 0.12.1 : `fixed inset-x-0 bottom-0 … pb-[calc(0.375rem+env(safe-area-inset-bottom))]`, `md:right-auto md:justify-start`). Jamais essayé sur la vraie installation.
+
 ## État (20/11/2026)
 - **0.8.1 (20/11/2026)** : copies communes du socle 0.11.1 (titre « Pour le relier » quand le réglage est dans l'appli).
 - **0.8.0** (20/11/2026) : fiches « Connexion » communes (contrat 3, socle 0.11.0) : `SERVICES` dans `main.py` (section « fiches Connexion » : `wikidata`, `mistral`, textes communs dans `TEXTES_SOURCES`), `maison.monter_services` après la garde, écran `$lib/services/Services.svelte` (commun, signé : ne pas le retoucher ici, `python3 tools/diffuser_maison.py ../comptoir` depuis le socle). `ANNEAU_CLE` (facultative) ouvre les seules fiches à l'Anneau. Ancienne `GET /api/sources` et `POST /api/sources/{nom}/verifier` à retirer en 0.9.0. Les livres EPUB restent dans Réglages (dossier de données), pas dans Connexion. **Jamais essayé sur la vraie installation.**
